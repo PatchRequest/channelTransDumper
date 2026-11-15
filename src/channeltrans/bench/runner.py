@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
@@ -53,7 +54,11 @@ def build_pool(
     variants: list[str],
     depth: int,
 ) -> list[dict[str, Any]]:
-    """Unjudged passages that any of the variants returns in its first ``depth`` hits."""
+    """Unjudged passages that any of the variants returns in its first ``depth`` hits.
+
+    Candidates are shuffled (seeded by case ID, so pools are reproducible): in ranking
+    order a judge would see the first variant's best hits first, which biases grades.
+    """
     pool = []
     for case in cases:
         if case.kind == "mention":
@@ -69,12 +74,14 @@ def build_pool(
                     ).fetchone()[0]
                     candidates[key] = {"key": key, "video_title": title, "text": passage.text}
         if candidates:
+            shuffled = list(candidates.values())
+            random.Random(case.id).shuffle(shuffled)
             pool.append(
                 {
                     "case_id": case.id,
                     "kind": case.kind,
                     "queries": case.queries,
-                    "candidates": list(candidates.values()),
+                    "candidates": shuffled,
                 }
             )
     return pool

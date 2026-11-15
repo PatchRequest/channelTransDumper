@@ -31,7 +31,8 @@ class Case:
     split: Split
     # mention cases only: spellings that count as a mention, incl. transcription errors
     terms: list[str] = field(default_factory=list)
-    # fact/sweep cases: the keyword query an agent would add to the question
+    # fact/sweep cases: the keyword query an agent would add to the question, written
+    # from the question's own words only (never from the known answer)
     keywords: str = ""
 
     def __post_init__(self) -> None:

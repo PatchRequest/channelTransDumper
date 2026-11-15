@@ -8,7 +8,7 @@
   "lang": "en",
   "group": "harris-feathers",
   "split": "test",
-  "keywords": "harris hawk feather goshawk imp"
+  "keywords": "harris hawk feathers goshawk broken tail"
  },
  {
   "id": "fact-de-02",
@@ -19,7 +19,7 @@
   "lang": "de",
   "group": "harris-feathers",
   "split": "test",
-  "keywords": "harris hawk feather goshawk imp"
+  "keywords": "harris hawk feathers goshawk broken"
  },
  {
   "id": "fact-en-03",
@@ -30,7 +30,7 @@
   "lang": "en",
   "group": "harris-signals",
   "split": "dev",
-  "keywords": "harris hawk tail signal hunt"
+  "keywords": "harris hawk signal group hunt"
  },
  {
   "id": "fact-de-04",
@@ -41,7 +41,7 @@
   "lang": "de",
   "group": "harris-signals",
   "split": "dev",
-  "keywords": "harris hawk tail signal hunt"
+  "keywords": "harris hawk silent group hunt"
  },
  {
   "id": "fact-en-05",
@@ -52,7 +52,7 @@
   "lang": "en",
   "group": "cold-and-leg-gear",
   "split": "test",
-  "keywords": "fur anklet cold"
+  "keywords": "fur legs warm winter"
  },
  {
   "id": "fact-de-06",
@@ -129,7 +129,7 @@
   "lang": "en",
   "group": "hoods",
   "split": "dev",
-  "keywords": "hood braces"
+  "keywords": "hood hawk"
  },
  {
   "id": "fact-en-13",
@@ -140,7 +140,7 @@
   "lang": "en",
   "group": "hoods",
   "split": "dev",
-  "keywords": "hooding accipiters"
+  "keywords": "hooding raptor species"
  },
  {
   "id": "fact-de-14",
@@ -195,7 +195,7 @@
   "lang": "en",
   "group": "peregrines",
   "split": "test",
-  "keywords": "peale's peregrine feet"
+  "keywords": "peregrine subspecies feet"
  },
  {
   "id": "fact-de-19",
@@ -228,7 +228,7 @@
   "lang": "en",
   "group": "castings",
   "split": "dev",
-  "keywords": "cast pellet"
+  "keywords": "pellet fur feathers"
  },
  {
   "id": "fact-de-22",
@@ -239,7 +239,7 @@
   "lang": "de",
   "group": "weight",
   "split": "test",
-  "keywords": "keel fat muscle"
+  "keywords": "keel fat thin"
  },
  {
   "id": "fact-en-23",
@@ -272,7 +272,7 @@
   "lang": "de",
   "group": "owls",
   "split": "dev",
-  "keywords": "owl silent feathers"
+  "keywords": "owl silent flight"
  },
  {
   "id": "fact-en-26",
@@ -316,7 +316,7 @@
   "lang": "de",
   "group": "harris-breeding",
   "split": "dev",
-  "keywords": "harris hawk breeding season hormones"
+  "keywords": "harris hawk female breeding season"
  },
  {
   "id": "fact-en-30",
@@ -393,7 +393,7 @@
   "lang": "en",
   "group": "lost-birds",
   "split": "dev",
-  "keywords": "lost bird telemetry"
+  "keywords": "hawk lost flies off"
  },
  {
   "id": "fact-de-37",
