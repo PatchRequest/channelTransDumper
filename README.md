@@ -1,0 +1,100 @@
+# channeltrans
+
+Pulls the transcripts of every video of a YouTube channel into a SQLite database with
+hybrid search (full text plus semantic similarity), so AI agents can look up what was
+said on the channel.
+
+## Setup
+
+Requirements: Python 3.12 or newer and [uv](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/PatchRequest/channelTransDumper.git
+cd channelTransDumper
+uv sync
+```
+
+yt-dlp needs a JavaScript runtime for YouTube: `node` or `deno` on the `PATH`.
+
+The first `sync` or `search` downloads the embedding model `google/embeddinggemma-300m`
+(about 1.2 GB) once into `~/.channeltrans/models`. After that it runs locally;
+transcripts and search queries never leave the machine.
+
+## Capturing a channel
+
+```bash
+uv run channeltrans sync https://www.youtube.com/@somechannel
+```
+
+- Lists the channel's videos, live streams and shorts and works through them from the
+  top (newest first). Running it again continues where the last run stopped and picks
+  up newly published videos.
+- `--limit N` caps a run, `--delay S` sets the pause between videos (default 3 s).
+- Failed videos are retried in later runs, up to five times. After three failures in a
+  row the run stops (exit code 1), because that suggests YouTube is blocking requests.
+- `--recheck-missing` checks videos without a transcript again; automatic captions
+  often appear some time after a video is published.
+- Run only one `sync` at a time against the same database; capture several channels
+  one after the other.
+- Only the subtitle track in the video's original language is stored (manually
+  maintained subtitles win over automatic captions), never a translation.
+
+### Proxy (e.g. thermoptic)
+
+```bash
+uv run channeltrans sync <channel-url> --proxy http://127.0.0.1:1234 --proxy-insecure-tls
+```
+
+`--proxy-insecure-tls` turns off certificate verification. That is needed for proxies
+that intercept TLS with their own CA; the proxy then verifies YouTube's certificate.
+Both can also be set through `CHANNELTRANS_PROXY` and `CHANNELTRANS_PROXY_INSECURE_TLS=1`.
+
+## Database
+
+Default path `~/.channeltrans/transcripts.db`, changeable with `--db` or `CHANNELTRANS_DB`.
+
+| Table             | Content                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `channels`        | captured channels                                                    |
+| `videos`          | all videos with status `pending`/`done`/`no_transcript`/`failed`     |
+| `transcripts`     | raw transcript per video as timestamped lines (JSON)                 |
+| `passages`        | sections of about 1000 characters (roughly one minute), timestamped  |
+| `passages_fts`    | FTS5 full-text index over `passages`                                 |
+| `passage_vectors` | embedding per passage (sqlite-vec), computed from video title + text |
+
+`channeltrans reindex` rebuilds passages and vectors from the raw transcripts (after
+changing `PASSAGE_TARGET_CHARS`) without querying YouTube again. Querying
+`passage_vectors` directly with SQL requires the sqlite-vec extension.
+
+## Searching
+
+```bash
+uv run channeltrans search 'hawk* "weight control"' --channel @somechannel
+uv run channeltrans status
+```
+
+Every search runs twice and is fused into one ranking (reciprocal rank fusion):
+
+- **Full text** finds exact terms and names. Words are searched individually (English
+  stemming), `"…"` is an exact phrase, `word*` a prefix. `--any` requires only one of
+  the terms instead of all.
+- **Semantic** finds hits by meaning, even when a word was mistranscribed or the
+  question is asked in a different language than the video.
+
+Output is JSON. For each hit, `text_match` tells whether the terms occur literally and
+`semantic_similarity` (0–1) how close it is in meaning.
+
+## MCP server for agents
+
+```bash
+claude mcp add channeltrans -- uv run --directory /path/to/channelTransDumper channeltrans mcp
+```
+
+Tools: `list_channels`, `search_transcripts`, `get_passage_context`,
+`get_video_transcript`, `list_videos`. The server opens the database read-only.
+
+## Tests
+
+```bash
+uv run pytest
+```
