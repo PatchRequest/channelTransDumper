@@ -6,6 +6,7 @@ when the database is rebuilt; see :func:`metrics.match_judgment`.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -24,6 +25,9 @@ class Case:
     queries: list[str]
     kind: Kind  # fact: one specific answer; sweep: everything on a topic; mention: a term
     lang: str  # language of the queries
+    # Cases on the same topic (e.g. one fact asked in two languages) share a group, and a
+    # group lies entirely in one split, so tuning on dev cannot leak into test results.
+    group: str
     split: Split
     # mention cases only: spellings that count as a mention, incl. transcription errors
     terms: list[str] = field(default_factory=list)
@@ -57,7 +61,19 @@ def load_cases(path: Path) -> list[Case]:
     ids = [case.id for case in cases]
     if len(ids) != len(set(ids)):
         raise ValueError(f"{path} contains duplicate case IDs.")
+    split_of: dict[str, str] = {}
+    for case in cases:
+        if split_of.setdefault(case.group, case.split) != case.split:
+            raise ValueError(f"Group {case.group} spans both splits.")
     return cases
+
+
+def fingerprint(*paths: Path) -> str:
+    """Short hash of the given files, recorded with results to make runs reproducible."""
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.read_bytes() if path.is_file() else b"")
+    return digest.hexdigest()[:12]
 
 
 def load_judgments(path: Path) -> Judgments:

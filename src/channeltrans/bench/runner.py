@@ -15,6 +15,10 @@ from .metrics import Retrieved
 from .variants import VARIANTS
 
 
+# Hits requested per variant and case: four pages of 50.
+DEPTH = 200
+
+
 @dataclass(frozen=True)
 class Row:
     variant: str
@@ -91,34 +95,51 @@ def merge_grades(judgments: Judgments, grades: dict[str, dict[str, int]]) -> int
     return added
 
 
+@dataclass(frozen=True)
+class Evaluation:
+    rows: list[Row]
+    unjudged_cases: list[str]  # fact/sweep cases skipped for lack of a relevant judgment
+
+
 def evaluate(
     conn: sqlite3.Connection,
     embedder: Embedder,
     cases: list[Case],
     judgments: Judgments,
     variants: list[str],
-    depth: int = 50,
-) -> list[Row]:
-    mention_truth = {
-        case.id: _mentions(conn, case) for case in cases if case.kind == "mention"
-    }
+) -> Evaluation:
+    """Metrics per variant and case group (kind, and kind/language).
+
+    Variants are asked for up to ``DEPTH`` hits, so completeness beyond the first 50
+    is measurable once a variant can deliver it (e.g. through paging).
+    """
+    scored = [
+        case
+        for case in cases
+        if case.kind == "mention" or any(j.grade > 0 for j in judgments.get(case.id, []))
+    ]
+    unjudged_cases = [case.id for case in cases if case not in scored]
+    mention_truth = {case.id: _mentions(conn, case) for case in scored if case.kind == "mention"}
     rows = []
     for variant in variants:
         per_group: dict[str, list[dict[str, float]]] = defaultdict(list)
-        for case in cases:
-            ranked = run_variant(conn, embedder, variant, case, depth)
+        for case in scored:
+            ranked = run_variant(conn, embedder, variant, case, DEPTH)
             if case.kind == "mention":
                 truth = mention_truth[case.id]
-                found = {p.passage_id for p in ranked} & truth
-                values = {"mention_R@50": len(found) / len(truth) if truth else 0.0}
+                values = {
+                    f"mention_R@{k}": len({p.passage_id for p in ranked[:k]} & truth) / len(truth)
+                    if truth
+                    else 0.0
+                    for k in (50, DEPTH)
+                }
             else:
-                judged = judgments.get(case.id, [])
-                if not any(j.grade > 0 for j in judged):
-                    raise ValueError(f"Case {case.id} has no relevant judgment.")
+                judged = judgments[case.id]
                 values = {
                     "nDCG@10": metrics.ndcg(ranked, judged, 10),
                     "R@10": metrics.recall(ranked, judged, 10),
                     "R@50": metrics.recall(ranked, judged, 50),
+                    f"R@{DEPTH}": metrics.recall(ranked, judged, DEPTH),
                     "unjudged@10": metrics.unjudged(ranked, judged, 10),
                 }
             per_group[f"{case.kind}/{case.lang}"].append(values)
@@ -128,11 +149,13 @@ def evaluate(
             rows.append(
                 Row(variant, group, len(results), {m: mean(r[m] for r in results) for m in results[0]})
             )
-    return rows
+    return Evaluation(rows, unjudged_cases)
 
 
 def format_table(rows: list[Row]) -> str:
-    columns = ["nDCG@10", "R@10", "R@50", "unjudged@10", "mention_R@50"]
+    columns = [
+        "nDCG@10", "R@10", "R@50", f"R@{DEPTH}", "unjudged@10", "mention_R@50", f"mention_R@{DEPTH}",
+    ]
     lines = [
         "| variant | group | cases | " + " | ".join(columns) + " |",
         "|---|---|---|" + "---|" * len(columns),

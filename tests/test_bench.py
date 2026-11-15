@@ -73,14 +73,17 @@ def test_mention_pattern_matches_whole_words_and_variants():
 
 def test_cases_validate_terms_and_ids(tmp_path):
     with pytest.raises(ValueError):
-        Case("m", ["harris"], "mention", "en", "dev")
+        Case("m", ["harris"], "mention", "en", "g", "dev")
     with pytest.raises(ValueError):
-        Case("f", ["q"], "fact", "en", "dev", terms=["x"])
+        Case("f", ["q"], "fact", "en", "g", "dev", terms=["x"])
     path = tmp_path / "cases.json"
-    path.write_text(json.dumps([{"id": "a", "queries": ["q"], "kind": "fact", "lang": "en",
-                                 "split": "dev"}] * 2))
+    case = {"id": "a", "queries": ["q"], "kind": "fact", "lang": "en", "group": "g", "split": "dev"}
+    path.write_text(json.dumps([case, case]))
     with pytest.raises(ValueError):
-        dataset.load_cases(path)
+        dataset.load_cases(path)  # duplicate IDs
+    path.write_text(json.dumps([case, case | {"id": "b", "split": "test"}]))
+    with pytest.raises(ValueError):
+        dataset.load_cases(path)  # one group in both splits
 
 
 def test_judgments_round_trip(tmp_path):
@@ -133,22 +136,27 @@ def test_pool_merge_and_evaluate(db, tmp_path):
     snap = tmp_path / "snap.db"
     snapshot.create_snapshot(db, snap)
     cases = [
-        Case("hood", ["hooding falcon"], "fact", "en", "dev"),
-        Case("harris", ["harris hawk"], "mention", "en", "dev", terms=["harris hawk", "harris hog"]),
+        Case("hood", ["hooding falcon"], "fact", "en", "hood", "dev"),
+        Case("cold", ["cold weather"], "fact", "en", "cold", "dev"),
+        Case("harris", ["harris hawk"], "mention", "en", "harris", "dev",
+             terms=["harris hawk", "harris hog"]),
     ]
     conn = connect_read_only(snap)
     judgments: dataset.Judgments = {}
     pool = runner.build_pool(conn, EMBEDDER, cases, judgments, ["hybrid", "fts_any"], 5)
-    assert [entry["case_id"] for entry in pool] == ["hood"]  # mentions need no judging
+    assert [entry["case_id"] for entry in pool] == ["hood", "cold"]  # mentions need no judging
+    pool = pool[:1]
     keys = [c["key"] for c in pool[0]["candidates"]]
     hood_key = next(c["key"] for c in pool[0]["candidates"] if "Hooding" in c["text"])
     grades = {"hood": {key: 2 if key == hood_key else 0 for key in keys}}
     assert runner.merge_grades(judgments, grades) == len(keys)
     with pytest.raises(ValueError):
         runner.merge_grades(judgments, grades)  # judging a span twice is an error
-    assert runner.build_pool(conn, EMBEDDER, cases, judgments, ["hybrid"], 5) == []
+    assert [e["case_id"] for e in runner.build_pool(conn, EMBEDDER, cases, judgments, ["hybrid"], 5)] == ["cold"]
 
-    rows = runner.evaluate(conn, EMBEDDER, cases, judgments, ["hybrid"])
+    evaluation = runner.evaluate(conn, EMBEDDER, cases, judgments, ["hybrid"])
+    assert evaluation.unjudged_cases == ["cold"]
+    rows = evaluation.rows
     by_group = {row.group: row.values for row in rows}
     assert by_group["fact"]["nDCG@10"] == pytest.approx(1.0)
     assert by_group["fact"]["unjudged@10"] == 0.0

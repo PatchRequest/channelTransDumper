@@ -6,7 +6,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "dev"
+  "group": "harris-feathers",
+  "split": "test"
  },
  {
   "id": "fact-de-02",
@@ -15,6 +16,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "harris-feathers",
   "split": "test"
  },
  {
@@ -24,6 +26,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "harris-signals",
   "split": "dev"
  },
  {
@@ -33,7 +36,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "test"
+  "group": "harris-signals",
+  "split": "dev"
  },
  {
   "id": "fact-en-05",
@@ -42,7 +46,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "dev"
+  "group": "cold-and-leg-gear",
+  "split": "test"
  },
  {
   "id": "fact-de-06",
@@ -51,7 +56,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "test"
+  "group": "first-bird",
+  "split": "dev"
  },
  {
   "id": "fact-en-07",
@@ -60,6 +66,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "solitary-eagle",
   "split": "dev"
  },
  {
@@ -69,7 +76,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "test"
+  "group": "bird-flu",
+  "split": "dev"
  },
  {
   "id": "fact-en-09",
@@ -78,6 +86,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "bird-flu",
   "split": "dev"
  },
  {
@@ -87,6 +96,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "travel-box",
   "split": "test"
  },
  {
@@ -96,7 +106,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "dev"
+  "group": "travel-box",
+  "split": "test"
  },
  {
   "id": "fact-en-12",
@@ -105,7 +116,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "hoods",
+  "split": "dev"
  },
  {
   "id": "fact-en-13",
@@ -114,6 +126,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "hoods",
   "split": "dev"
  },
  {
@@ -123,6 +136,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "molt",
   "split": "test"
  },
  {
@@ -132,7 +146,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "dev"
+  "group": "molt",
+  "split": "test"
  },
  {
   "id": "fact-en-16",
@@ -141,7 +156,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "passage-birds",
+  "split": "dev"
  },
  {
   "id": "fact-de-17",
@@ -150,7 +166,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "dev"
+  "group": "screaming-imprints",
+  "split": "test"
  },
  {
   "id": "fact-en-18",
@@ -159,6 +176,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "peregrines",
   "split": "test"
  },
  {
@@ -168,7 +186,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "dev"
+  "group": "peregrines",
+  "split": "test"
  },
  {
   "id": "fact-en-20",
@@ -177,6 +196,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "quail-hawking",
   "split": "test"
  },
  {
@@ -186,6 +206,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "castings",
   "split": "dev"
  },
  {
@@ -195,6 +216,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "weight",
   "split": "test"
  },
  {
@@ -204,6 +226,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "lost-birds",
   "split": "dev"
  },
  {
@@ -213,6 +236,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "housing",
   "split": "test"
  },
  {
@@ -222,6 +246,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "owls",
   "split": "dev"
  },
  {
@@ -231,6 +256,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "first-aid",
   "split": "test"
  },
  {
@@ -240,6 +266,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "eagle-dangers",
   "split": "dev"
  },
  {
@@ -249,7 +276,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "permits",
+  "split": "dev"
  },
  {
   "id": "fact-de-29",
@@ -258,6 +286,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "harris-breeding",
   "split": "dev"
  },
  {
@@ -267,6 +296,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "ferruginous",
   "split": "test"
  },
  {
@@ -276,7 +306,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "dev"
+  "group": "ferruginous",
+  "split": "test"
  },
  {
   "id": "fact-en-32",
@@ -285,6 +316,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "cold-and-leg-gear",
   "split": "test"
  },
  {
@@ -294,7 +326,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "dev"
+  "group": "weight",
+  "split": "test"
  },
  {
   "id": "fact-en-34",
@@ -303,7 +336,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "hoods",
+  "split": "dev"
  },
  {
   "id": "fact-de-35",
@@ -312,6 +346,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "hoods",
   "split": "dev"
  },
  {
@@ -321,7 +356,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "lost-birds",
+  "split": "dev"
  },
  {
   "id": "fact-de-37",
@@ -330,6 +366,7 @@
   ],
   "kind": "fact",
   "lang": "de",
+  "group": "lost-birds",
   "split": "dev"
  },
  {
@@ -339,6 +376,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "screaming-imprints",
   "split": "test"
  },
  {
@@ -348,7 +386,8 @@
   ],
   "kind": "fact",
   "lang": "de",
-  "split": "dev"
+  "group": "harris-diet",
+  "split": "test"
  },
  {
   "id": "fact-en-40",
@@ -357,7 +396,8 @@
   ],
   "kind": "fact",
   "lang": "en",
-  "split": "test"
+  "group": "caracara",
+  "split": "dev"
  },
  {
   "id": "fact-en-41",
@@ -366,6 +406,7 @@
   ],
   "kind": "fact",
   "lang": "en",
+  "group": "passage-birds",
   "split": "dev"
  },
  {
@@ -375,7 +416,8 @@
   ],
   "kind": "sweep",
   "lang": "en",
-  "split": "dev"
+  "group": "cold-and-leg-gear",
+  "split": "test"
  },
  {
   "id": "sweep-en-02",
@@ -384,6 +426,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "weight",
   "split": "test"
  },
  {
@@ -393,7 +436,8 @@
   ],
   "kind": "sweep",
   "lang": "de",
-  "split": "dev"
+  "group": "weight",
+  "split": "test"
  },
  {
   "id": "sweep-en-04",
@@ -402,6 +446,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "molt",
   "split": "test"
  },
  {
@@ -411,6 +456,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "hoods",
   "split": "dev"
  },
  {
@@ -420,6 +466,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "screaming-imprints",
   "split": "test"
  },
  {
@@ -429,7 +476,8 @@
   ],
   "kind": "sweep",
   "lang": "de",
-  "split": "dev"
+  "group": "screaming-imprints",
+  "split": "test"
  },
  {
   "id": "sweep-en-08",
@@ -438,7 +486,8 @@
   ],
   "kind": "sweep",
   "lang": "en",
-  "split": "test"
+  "group": "lost-birds",
+  "split": "dev"
  },
  {
   "id": "sweep-en-09",
@@ -447,6 +496,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "goshawks",
   "split": "dev"
  },
  {
@@ -456,7 +506,8 @@
   ],
   "kind": "sweep",
   "lang": "en",
-  "split": "test"
+  "group": "caracara",
+  "split": "dev"
  },
  {
   "id": "sweep-en-11",
@@ -465,6 +516,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "first-bird",
   "split": "dev"
  },
  {
@@ -474,6 +526,7 @@
   ],
   "kind": "sweep",
   "lang": "de",
+  "group": "housing",
   "split": "test"
  },
  {
@@ -483,6 +536,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "eagle-dangers",
   "split": "dev"
  },
  {
@@ -492,7 +546,8 @@
   ],
   "kind": "sweep",
   "lang": "en",
-  "split": "test"
+  "group": "bird-flu",
+  "split": "dev"
  },
  {
   "id": "sweep-en-15",
@@ -501,6 +556,7 @@
   ],
   "kind": "sweep",
   "lang": "en",
+  "group": "passage-birds",
   "split": "dev"
  },
  {
@@ -510,6 +566,7 @@
   ],
   "kind": "sweep",
   "lang": "de",
+  "group": "cold-and-leg-gear",
   "split": "test"
  },
  {
@@ -519,17 +576,32 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "dev",
   "terms": [
+   "haris",
+   "haris hawk",
+   "haris hawks",
+   "haris hog",
+   "harris",
    "harris hawk",
    "harris hawks",
-   "harris's hawk",
-   "harris's hawks",
    "harris hog",
    "harris hogs",
+   "harris socks",
+   "harris' hawk",
+   "harris' hawks",
+   "harris's hawk",
+   "harris's hawks",
    "harrises",
-   "harris"
-  ]
+   "harrison's hawk",
+   "harry socks",
+   "harry's hawk",
+   "harry's hog",
+   "harsh hawk",
+   "harsh hawks",
+   "herasocks"
+  ],
+  "group": "harris-mentions",
+  "split": "dev"
  },
  {
   "id": "mention-goshawk",
@@ -538,18 +610,34 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "test",
   "terms": [
-   "goshawk",
-   "goshawks",
-   "gosh hawk",
-   "gosh hawks",
    "gos hawk",
    "gos hawks",
+   "gos hog",
+   "gosh hawk",
+   "gosh hawks",
+   "gosh hog",
+   "gosh hogs",
+   "goshaw",
+   "goshawk",
+   "goshawks",
+   "goshock",
+   "goshocks",
+   "gosok",
    "goss hawk",
+   "goss hawks",
+   "goss hog",
+   "goss hogs",
+   "gossack",
+   "gosslock",
    "gossock",
-   "gossocks"
-  ]
+   "gossocks",
+   "gossok",
+   "gossox",
+   "gossshocks"
+  ],
+  "group": "goshawks",
+  "split": "dev"
  },
  {
   "id": "mention-caracara",
@@ -558,11 +646,14 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "dev",
   "terms": [
    "caracara",
-   "caracaras"
-  ]
+   "caracaras",
+   "carakara",
+   "carakaras"
+  ],
+  "group": "caracara",
+  "split": "dev"
  },
  {
   "id": "mention-peregrine",
@@ -571,11 +662,16 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "test",
   "terms": [
+   "peragine",
+   "peragrin",
+   "peragrins",
    "peregrine",
+   "peregrine's",
    "peregrines"
-  ]
+  ],
+  "group": "peregrines",
+  "split": "test"
  },
  {
   "id": "mention-kestrel",
@@ -584,11 +680,15 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "dev",
   "terms": [
+   "kestal",
+   "kestral",
    "kestrel",
+   "kestrel's",
    "kestrels"
-  ]
+  ],
+  "group": "kestrels",
+  "split": "test"
  },
  {
   "id": "mention-ferruginous",
@@ -597,14 +697,20 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "test",
   "terms": [
+   "ferriginous",
+   "ferrogenous",
+   "ferrug",
    "ferruginous",
    "ferruginous hawk",
    "ferruginous hawks",
+   "ferruginus",
    "ferrugs",
-   "ferrug"
-  ]
+   "ferugenous",
+   "feruous"
+  ],
+  "group": "ferruginous",
+  "split": "test"
  },
  {
   "id": "mention-barn-owl",
@@ -613,11 +719,12 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "dev",
   "terms": [
    "barn owl",
    "barn owls"
-  ]
+  ],
+  "group": "owls",
+  "split": "dev"
  },
  {
   "id": "mention-imprint",
@@ -626,12 +733,13 @@
   ],
   "kind": "mention",
   "lang": "en",
-  "split": "test",
   "terms": [
    "imprint",
    "imprints",
    "imprinted",
    "imprinting"
-  ]
+  ],
+  "group": "screaming-imprints",
+  "split": "test"
  }
 ]

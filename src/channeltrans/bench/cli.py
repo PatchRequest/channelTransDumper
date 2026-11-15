@@ -28,12 +28,14 @@ def _parser() -> argparse.ArgumentParser:
     snap.add_argument("source", type=Path)
     snap.add_argument("destination", type=Path)
 
-    variants = ",".join(VARIANTS)
+    # The reranker is slow; pass it explicitly to pool or evaluate with it.
+    variants = ",".join(name for name in VARIANTS if name != "reranked")
     pool = commands.add_parser("pool", help="write unjudged candidates for relevance judging")
     pool.add_argument("--db", type=Path, required=True, help="snapshot to query")
     pool.add_argument("--variants", default=variants)
     pool.add_argument("--depth", type=int, default=30)
     pool.add_argument("--split", choices=["dev", "test"])
+    pool.add_argument("--kind", choices=["fact", "sweep"], help="only cases of this kind")
     pool.add_argument("--out", type=Path, required=True)
 
     imp = commands.add_parser("import-judgments", help="merge graded pool entries")
@@ -69,7 +71,11 @@ def _run(args: argparse.Namespace) -> None:
         return
 
     snapshot.load_manifest(args.db)  # only frozen snapshots are measured
-    cases = [c for c in dataset.load_cases(args.cases) if args.split in (None, c.split)]
+    cases = [
+        c
+        for c in dataset.load_cases(args.cases)
+        if args.split in (None, c.split) and getattr(args, "kind", None) in (None, c.kind)
+    ]
     judgments = dataset.load_judgments(args.judgments)
     variants = args.variants.split(",")
     unknown = set(variants) - VARIANTS.keys()
@@ -82,15 +88,20 @@ def _run(args: argparse.Namespace) -> None:
             args.out.write_text(json.dumps(pool, indent=1, ensure_ascii=False) + "\n")
             print(f"{sum(len(c['candidates']) for c in pool)} candidates in {len(pool)} cases.")
             return
-        table = runner.format_table(
-            runner.evaluate(conn, embedder, cases, judgments, variants)
-        )
-    print(table)
+        evaluation = runner.evaluate(conn, embedder, cases, judgments, variants)
+    table = runner.format_table(evaluation.rows)
+    skipped = (
+        f"Skipped {len(evaluation.unjudged_cases)} cases without relevant judgments: "
+        + ", ".join(evaluation.unjudged_cases)
+        if evaluation.unjudged_cases
+        else "All cases judged."
+    )
+    print(table, skipped, sep="\n\n")
     if args.record:
-        _record(args, table)
+        _record(args, table, skipped)
 
 
-def _record(args: argparse.Namespace, table: str) -> None:
+def _record(args: argparse.Namespace, table: str, skipped: str) -> None:
     manifest = snapshot.load_manifest(args.db)
     commit = subprocess.run(
         ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True
@@ -103,7 +114,10 @@ def _record(args: argparse.Namespace, table: str) -> None:
         f"- code: `{commit}`{' (uncommitted changes in src/)' if dirty else ''}\n"
         f"- snapshot: `{args.db.name}` ({manifest['passages']} passages, "
         f"created {manifest['created_at']})\n"
-        f"- split: {args.split}\n\n{table}\n"
+        f"- split: {args.split}\n"
+        f"- cases: `{args.cases}`, judgments: `{args.judgments}` "
+        f"(fingerprint `{dataset.fingerprint(args.cases, args.judgments)}`)\n"
+        f"- {skipped}\n\n{table}\n"
     )
     with (BENCHMARK_DIR / "RESULTS.md").open("a") as results:
         results.write(entry)
