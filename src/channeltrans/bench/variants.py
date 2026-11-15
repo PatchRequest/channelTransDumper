@@ -12,12 +12,13 @@ from .dataset import Case
 Variant = Callable[[sqlite3.Connection, Embedder, Case, int], list[int]]
 
 
-def _hybrid(match: search.Match) -> Variant:
+def _hybrid(match: search.Match, with_keywords: bool = False) -> Variant:
     def run(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
+        queries = case.queries + ([case.keywords] if with_keywords and case.keywords else [])
         ids: list[int] = []
         while len(ids) < depth:  # page through the ranking like an agent would
             page = search.search_passages(
-                conn, embedder, case.queries, match=match, offset=len(ids),
+                conn, embedder, queries, match=match, offset=len(ids),
                 limit=min(search.MAX_LIMIT, depth - len(ids)),
             )
             ids += [hit["passage_id"] for hit in page]
@@ -83,6 +84,7 @@ class _Reranked:
 VARIANTS: dict[str, Variant] = {
     "hybrid": _hybrid("all"),
     "hybrid_any": _hybrid("any"),
+    "hybrid_kw": _hybrid("all", with_keywords=True),
     "semantic": _semantic,
     "fts_any": _fts_any,
     "mentions": _mentions,
@@ -90,7 +92,10 @@ VARIANTS: dict[str, Variant] = {
 }
 
 # Variants that only make sense for some case kinds (default: all kinds).
-APPLIES_TO: dict[str, frozenset[str]] = {"mentions": frozenset({"mention"})}
+APPLIES_TO: dict[str, frozenset[str]] = {
+    "mentions": frozenset({"mention"}),
+    "hybrid_kw": frozenset({"fact", "sweep"}),
+}
 
 
 def applies(variant: str, kind: str) -> bool:
