@@ -220,10 +220,10 @@ def test_search_context_and_transcript_queries(conn):
     ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
 
     def text_hits(query, **kwargs):
-        hits = search.search_passages(conn, EMBEDDER, query, **kwargs)
+        hits = search.search_passages(conn, EMBEDDER, [query], **kwargs)
         return [h["video_id"] for h in hits if h["text_match"]]
 
-    hits = search.search_passages(conn, EMBEDDER, "falcons weight", channel="@falconer")
+    hits = search.search_passages(conn, EMBEDDER, ["falcons weight"], channel="@falconer")
     assert hits[0]["video_id"] == "v2" and hits[0]["text_match"]  # stemming: falcons → falcon
     assert hits[0]["url"] == "https://www.youtube.com/watch?v=v2&t=0s"
     assert hits[0]["semantic_similarity"] > 0
@@ -232,10 +232,10 @@ def test_search_context_and_transcript_queries(conn):
     assert text_hits('"weight control"') == ["v2"]
 
     # A semantic hit without a literal match of all terms still ranks first.
-    semantic = search.search_passages(conn, EMBEDDER, "falcon weight control daily routine")
+    semantic = search.search_passages(conn, EMBEDDER, ["falcon weight control daily routine"])
     assert semantic[0]["video_id"] == "v2" and not semantic[0]["text_match"]
 
-    third = search.search_passages(conn, EMBEDDER, '"Passage 2"')[0]
+    third = search.search_passages(conn, EMBEDDER, ['"Passage 2"'])[0]
     context = search.passage_context(conn, third["passage_id"], before=1, after=5)
     assert [p["seq"] for p in context] == [1, 2, 3]
     assert third["start"] == "0:00:10"
@@ -248,10 +248,38 @@ def test_search_context_and_transcript_queries(conn):
     stats = search.channel_stats(conn)
     assert (stats[0]["videos"], stats[0]["done"]) == (2, 2)
 
+    assert stats[0]["transcript_languages"] == {"en": 2}
+
     with pytest.raises(search.QueryError):
-        search.search_passages(conn, EMBEDDER, "hawk", channel="unknown")
+        search.search_passages(conn, EMBEDDER, ["hawk"], channel="unknown")
+    with pytest.raises(search.QueryError):
+        search.search_passages(conn, EMBEDDER, [" "])
+    with pytest.raises(search.QueryError):
+        search.search_passages(conn, EMBEDDER, ["hawk"] * (search.MAX_QUERIES + 1))
     with pytest.raises(search.QueryError):
         search.passage_context(conn, 9999)
+
+
+def test_several_queries_are_fused(conn):
+    client = FakeClient(
+        {
+            "a": _video("a", "Hooding calms the falcon before the flight."),
+            "b": _video("b", "Haube beruhigt den Falken vor dem Flug."),
+        }
+    )
+    channel_id = ingest.discover(conn, client, "u")
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
+
+    def found(queries):
+        return {
+            h["video_id"]
+            for h in search.search_passages(conn, EMBEDDER, queries)
+            if h["text_match"]
+        }
+
+    assert found(["hooding falcon"]) == {"a"}
+    assert found(["Haube Falken"]) == {"b"}
+    assert found(["hooding falcon", "Haube Falken"]) == {"a", "b"}
 
 
 def test_refetch_and_reindex_replace_passages_without_stale_search_hits(conn):
@@ -264,7 +292,7 @@ def test_refetch_and_reindex_replace_passages_without_stale_search_hits(conn):
     ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
 
     def hits(query):
-        return [(h["text"], h["text_match"]) for h in search.search_passages(conn, EMBEDDER, query)]
+        return [(h["text"], h["text_match"]) for h in search.search_passages(conn, EMBEDDER, [query])]
 
     # The old passage is gone from both the full-text index and the vector table.
     assert hits("jesses") == [("new wording about bells", False)]

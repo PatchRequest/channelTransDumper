@@ -3,6 +3,7 @@ name = "channeltrans"
 version = "0.1.0"
 description = "Pulls the transcripts of a YouTube channel into a searchable SQLite database for AI agents."
 requires-python = ">=3.12"
+license = "MIT"
 dependencies = [
     "yt-dlp[default,curl-cffi]>=2026.10.26",
     "mcp>=2.3,<3",

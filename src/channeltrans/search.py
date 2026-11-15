@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from collections.abc import Sequence
 from typing import Any, Literal
 
 from .embedding import Embedder
 
 MAX_LIMIT = 50
+MAX_QUERIES = 5
 # Number of candidates each of the two searches contributes before fusion.
 _CANDIDATES = 50
 # Customary damping constant of reciprocal rank fusion.
@@ -50,7 +52,7 @@ def build_fts_query(query: str, match: Literal["all", "any"]) -> str:
 def search_passages(
     conn: sqlite3.Connection,
     embedder: Embedder,
-    query: str,
+    queries: Sequence[str],
     *,
     channel: str | None = None,
     match: Literal["all", "any"] = "all",
@@ -60,18 +62,31 @@ def search_passages(
 
     Full-text search finds exact terms and names; semantic search finds hits by
     meaning – even with mistranscribed words or a query in another language.
+    Several ``queries`` (e.g. the same question phrased in different languages) are
+    searched separately and fused, so a passage found by several of them ranks higher.
     ``match`` only affects the full-text part.
     """
+    queries = [query for query in queries if query.strip()]
+    if not 1 <= len(queries) <= MAX_QUERIES:
+        raise QueryError(f"Between 1 and {MAX_QUERIES} non-empty queries are required.")
     channel_id = None if channel is None else resolve_channel(conn, channel)
     limit = _clamp(limit)
     candidates = max(limit, _CANDIDATES)
 
-    text_ids = _text_candidates(conn, build_fts_query(query, match), channel_id, candidates)
-    similarities = _semantic_candidates(conn, embedder.embed_query(query), channel_id, candidates)
+    rankings: list[list[int]] = []
+    text_matches: set[int] = set()
+    similarities: dict[int, float] = {}
+    for query in queries:
+        text_ids = _text_candidates(conn, build_fts_query(query, match), channel_id, candidates)
+        semantic = _semantic_candidates(conn, embedder.embed_query(query), channel_id, candidates)
+        rankings += [text_ids, list(semantic)]
+        text_matches.update(text_ids)
+        for passage_id, similarity in semantic.items():
+            similarities[passage_id] = max(similarity, similarities.get(passage_id, 0.0))
 
-    # Reciprocal rank fusion: passages ranked high in both lists win.
+    # Reciprocal rank fusion: passages ranked high in several lists win.
     scores: dict[int, float] = {}
-    for ranking in (text_ids, list(similarities)):
+    for ranking in rankings:
         for rank, passage_id in enumerate(ranking):
             scores[passage_id] = scores.get(passage_id, 0.0) + 1.0 / (_RRF_K + rank + 1)
     best = sorted(scores, key=lambda passage_id: (-scores[passage_id], passage_id))[:limit]
@@ -82,7 +97,6 @@ def search_passages(
         best,
     )
     by_id = {row["passage_id"]: row for row in rows}
-    text_matches = set(text_ids)
     return [
         _passage(by_id[passage_id])
         | {
@@ -215,7 +229,11 @@ def list_videos(
 
 
 def channel_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    """Overview of all channels with their synchronisation progress."""
+    """Overview of all channels with their synchronisation progress.
+
+    ``transcript_languages`` counts transcripts per language as YouTube reports it.
+    Single outliers are usually music-only clips whose language YouTube misdetected.
+    """
     rows = conn.execute(
         """SELECT c.id, c.handle, c.title, c.url, c.last_discovered_at,
                   count(v.id) AS videos,
@@ -225,8 +243,15 @@ def channel_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                   coalesce(sum(v.status = 'failed'), 0) AS failed
            FROM channels c LEFT JOIN videos v ON v.channel_id = c.id
            GROUP BY c.id ORDER BY c.title"""
-    )
-    return [dict(row) for row in rows]
+    ).fetchall()
+    languages: dict[str, dict[str, int]] = {}
+    for row in conn.execute(
+        """SELECT v.channel_id, t.language, count(*) AS transcripts
+           FROM transcripts t JOIN videos v ON v.id = t.video_id
+           GROUP BY v.channel_id, t.language ORDER BY transcripts DESC, t.language"""
+    ):
+        languages.setdefault(row["channel_id"], {})[row["language"]] = row["transcripts"]
+    return [dict(row) | {"transcript_languages": languages.get(row["id"], {})} for row in rows]
 
 
 def resolve_channel(conn: sqlite3.Connection, channel: str) -> str:

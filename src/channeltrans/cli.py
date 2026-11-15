@@ -55,7 +55,12 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     find = commands.add_parser("search", help="hybrid search (full text + semantic), JSON output")
-    find.add_argument("query")
+    find.add_argument(
+        "queries",
+        nargs="+",
+        metavar="query",
+        help="one or more phrasings of the question (e.g. in several languages), fused",
+    )
     find.add_argument("--channel", help="channel ID, @handle or title")
     find.add_argument("--any", action="store_true", help="one search term is enough (not all)")
     find.add_argument("--limit", type=int, default=10)
@@ -95,7 +100,7 @@ def _run(args: argparse.Namespace) -> int:
             output = search.search_passages(
                 conn,
                 LocalEmbedder(),
-                args.query,
+                args.queries,
                 channel=args.channel,
                 match="any" if args.any else "all",
                 limit=args.limit,

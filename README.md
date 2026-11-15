@@ -70,16 +70,23 @@ changing `PASSAGE_TARGET_CHARS`) without querying YouTube again. Querying
 
 ```bash
 uv run channeltrans search 'hawk* "weight control"' --channel @somechannel
+uv run channeltrans search "how do I stop my hawk screaming" "hawk screaming at home"
 uv run channeltrans status
 ```
+
+Several queries in one call (alternative wordings, or the same question in each
+language the channel's transcripts are in) are searched separately and fused into one
+ranking; passages found by several of them rank higher.
 
 Every search runs twice and is fused into one ranking (reciprocal rank fusion):
 
 - **Full text** finds exact terms and names. Words are searched individually (English
   stemming), `"…"` is an exact phrase, `word*` a prefix. `--any` requires only one of
   the terms instead of all.
-- **Semantic** finds hits by meaning, even when a word was mistranscribed or the
-  question is asked in a different language than the video.
+- **Semantic** finds hits by meaning, even when a word was mistranscribed. It also
+  works across languages, but clearly better when the query is in the transcript's
+  language: in a test with German questions on English transcripts, translating the
+  question first raised the share of correct first hits from 5 of 12 to 9 of 12.
 
 Output is JSON. For each hit, `text_match` tells whether the terms occur literally and
 `semantic_similarity` (0–1) how close it is in meaning.
@@ -98,3 +105,7 @@ Tools: `list_channels`, `search_transcripts`, `get_passage_context`,
 ```bash
 uv run pytest
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).

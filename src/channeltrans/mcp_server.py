@@ -24,10 +24,15 @@ def build_server(db_path: Path) -> MCPServer:
             "one-minute excerpt of what was said, with video, timestamp and link. "
             "Typical flow: list_channels → search_transcripts → get_passage_context for "
             "the surroundings of a hit. Search is hybrid (full text plus semantic "
-            "similarity) and understands questions in languages other than the video's. "
-            "Most transcripts are auto-generated: proper names and technical terms may "
-            "be misspelled. For exhaustive research, search several phrasings and raise "
-            "the limit."
+            "similarity). It works across languages, but hits are clearly better when "
+            "the query is in the transcript's language, so translate the question into "
+            "it rather than searching in the user's language. list_channels reports how "
+            "many transcripts each channel has per language (transcript_languages); a "
+            "single outlier is usually a misdetected music clip and can be ignored. Pass "
+            "one query per relevant language, or rephrasings of the question, as several "
+            "queries in one call. Most transcripts are auto-generated: proper names and "
+            "technical terms may be misspelled. For exhaustive research, search several "
+            "phrasings and raise the limit."
         ),
     )
     embedder = LocalEmbedder()
@@ -46,13 +51,13 @@ def build_server(db_path: Path) -> MCPServer:
 
     @server.tool()
     def list_channels() -> list[dict[str, Any]]:
-        """List all captured channels with their video counts and capture progress."""
+        """List all captured channels with video counts, progress and transcript languages."""
         with connection() as conn:
             return search.channel_stats(conn)
 
     @server.tool()
     def search_transcripts(
-        query: str,
+        queries: list[str],
         channel: str | None = None,
         match: Literal["all", "any"] = "all",
         limit: int = 10,
@@ -60,21 +65,27 @@ def build_server(db_path: Path) -> MCPServer:
         """Hybrid search over the transcripts; returns the most relevant passages.
 
         Combines full-text search (exact terms, names) with semantic search (hits by
-        meaning, even with mistranscribed words or a query in another language).
+        meaning, even with mistranscribed words). Each query is searched separately and
+        all results are fused into one ranking; passages found by several queries rank
+        higher.
 
-        query: question or search terms. For the full-text part: words are stemmed
-            (English), "…" searches an exact phrase, word* searches by prefix.
+        queries: 1–5 phrasings of the same question, each in a language the transcripts
+            are in (see list_channels → transcript_languages) – a query in another
+            language finds less and dilutes the ranking. Use several queries for
+            channels with several languages or for alternative wordings and synonyms.
+            For the full-text part: words are stemmed (English), "…" searches an exact
+            phrase, word* a prefix.
         channel: optionally restrict to one channel (ID, @handle or title).
         match: full-text part – "all" = every term must occur, "any" = one is enough.
         limit: number of hits (at most 50).
 
-        For each hit, text_match tells whether the terms occur literally, and
-        semantic_similarity (0–1, null if not among the semantically nearest) how
-        close it is in meaning.
+        For each hit, text_match tells whether the terms of some query occur literally,
+        and semantic_similarity (0–1, the best over all queries; null if not among the
+        semantically nearest) how close it is in meaning.
         """
         with connection() as conn:
             return search.search_passages(
-                conn, embedder, query, channel=channel, match=match, limit=limit
+                conn, embedder, queries, channel=channel, match=match, limit=limit
             )
 
     @server.tool()
