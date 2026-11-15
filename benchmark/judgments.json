@@ -1,0 +1,298 @@
+{
+ "fact-de-02": [
+  {
+   "video_id": "h-TNduwvy1s",
+   "start_ms": 677920,
+   "end_ms": 739760,
+   "grade": 2
+  }
+ ],
+ "fact-de-04": [
+  {
+   "video_id": "9mWzwWY1TuM",
+   "start_ms": 377580,
+   "end_ms": 485580,
+   "grade": 2
+  },
+  {
+   "video_id": "DKYXxcQXtG8",
+   "start_ms": 581160,
+   "end_ms": 642800,
+   "grade": 2
+  }
+ ],
+ "fact-de-06": [
+  {
+   "video_id": "0F4YyFXZeUc",
+   "start_ms": 359,
+   "end_ms": 63840,
+   "grade": 2
+  },
+  {
+   "video_id": "0F4YyFXZeUc",
+   "start_ms": 413460,
+   "end_ms": 472860,
+   "grade": 2
+  }
+ ],
+ "fact-de-08": [
+  {
+   "video_id": "InoiovAt1MM",
+   "start_ms": 468319,
+   "end_ms": 526399,
+   "grade": 2
+  },
+  {
+   "video_id": "InoiovAt1MM",
+   "start_ms": 526399,
+   "end_ms": 579680,
+   "grade": 2
+  }
+ ],
+ "fact-de-11": [
+  {
+   "video_id": "NgF9gAeMrpg",
+   "start_ms": 83680,
+   "end_ms": 146080,
+   "grade": 2
+  }
+ ],
+ "fact-de-14": [
+  {
+   "video_id": "ZiPChPAnG-g",
+   "start_ms": 296840,
+   "end_ms": 357240,
+   "grade": 2
+  },
+  {
+   "video_id": "ZiPChPAnG-g",
+   "start_ms": 357240,
+   "end_ms": 415960,
+   "grade": 2
+  }
+ ],
+ "fact-de-17": [
+  {
+   "video_id": "a_9NR3ZAUQo",
+   "start_ms": 958000,
+   "end_ms": 1016079,
+   "grade": 2
+  }
+ ],
+ "fact-de-19": [
+  {
+   "video_id": "uh5FtwdWuQU",
+   "start_ms": 451840,
+   "end_ms": 511600,
+   "grade": 2
+  }
+ ],
+ "fact-de-22": [
+  {
+   "video_id": "u9ppeXpHobQ",
+   "start_ms": 280320,
+   "end_ms": 346680,
+   "grade": 2
+  }
+ ],
+ "fact-de-25": [
+  {
+   "video_id": "MZXd0IPPc0U",
+   "start_ms": 270240,
+   "end_ms": 327600,
+   "grade": 2
+  },
+  {
+   "video_id": "VGsSTUnfV-s",
+   "start_ms": 160,
+   "end_ms": 54399,
+   "grade": 2
+  }
+ ],
+ "fact-de-29": [
+  {
+   "video_id": "hLUVadKLgRQ",
+   "start_ms": 253040,
+   "end_ms": 314320,
+   "grade": 2
+  }
+ ],
+ "fact-de-31": [
+  {
+   "video_id": "JMkCOyEsOtQ",
+   "start_ms": 820099,
+   "end_ms": 876201,
+   "grade": 2
+  }
+ ],
+ "fact-en-01": [
+  {
+   "video_id": "h-TNduwvy1s",
+   "start_ms": 677920,
+   "end_ms": 739760,
+   "grade": 2
+  }
+ ],
+ "fact-en-03": [
+  {
+   "video_id": "9mWzwWY1TuM",
+   "start_ms": 377580,
+   "end_ms": 485580,
+   "grade": 2
+  },
+  {
+   "video_id": "DKYXxcQXtG8",
+   "start_ms": 581160,
+   "end_ms": 642800,
+   "grade": 2
+  }
+ ],
+ "fact-en-05": [
+  {
+   "video_id": "JMkCOyEsOtQ",
+   "start_ms": 820099,
+   "end_ms": 876201,
+   "grade": 2
+  },
+  {
+   "video_id": "h-TNduwvy1s",
+   "start_ms": 909920,
+   "end_ms": 964320,
+   "grade": 2
+  }
+ ],
+ "fact-en-07": [
+  {
+   "video_id": "JAfRTd3X-N4",
+   "start_ms": 546320,
+   "end_ms": 609200,
+   "grade": 2
+  }
+ ],
+ "fact-en-09": [
+  {
+   "video_id": "InoiovAt1MM",
+   "start_ms": 526399,
+   "end_ms": 579680,
+   "grade": 2
+  }
+ ],
+ "fact-en-10": [
+  {
+   "video_id": "NgF9gAeMrpg",
+   "start_ms": 83680,
+   "end_ms": 146080,
+   "grade": 2
+  }
+ ],
+ "fact-en-12": [
+  {
+   "video_id": "X6S0EJPdD-8",
+   "start_ms": 259680,
+   "end_ms": 326639,
+   "grade": 2
+  }
+ ],
+ "fact-en-13": [
+  {
+   "video_id": "r-9XuV4jZ9w",
+   "start_ms": 580640,
+   "end_ms": 646000,
+   "grade": 2
+  }
+ ],
+ "fact-en-15": [
+  {
+   "video_id": "ZiPChPAnG-g",
+   "start_ms": 296840,
+   "end_ms": 357240,
+   "grade": 2
+  }
+ ],
+ "fact-en-16": [
+  {
+   "video_id": "qGTX3zwmMpk",
+   "start_ms": 763279,
+   "end_ms": 824959,
+   "grade": 2
+  }
+ ],
+ "fact-en-18": [
+  {
+   "video_id": "uh5FtwdWuQU",
+   "start_ms": 511600,
+   "end_ms": 573600,
+   "grade": 2
+  }
+ ],
+ "fact-en-20": [
+  {
+   "video_id": "ZBCH25WSshE",
+   "start_ms": 1606520,
+   "end_ms": 1688009,
+   "grade": 2
+  }
+ ],
+ "fact-en-21": [
+  {
+   "video_id": "u9ppeXpHobQ",
+   "start_ms": 741120,
+   "end_ms": 809279,
+   "grade": 2
+  }
+ ],
+ "fact-en-23": [
+  {
+   "video_id": "XvPQN8urCMI",
+   "start_ms": 355500,
+   "end_ms": 426780,
+   "grade": 2
+  }
+ ],
+ "fact-en-24": [
+  {
+   "video_id": "pC0qCgATyO0",
+   "start_ms": 528440,
+   "end_ms": 632959,
+   "grade": 2
+  }
+ ],
+ "fact-en-26": [
+  {
+   "video_id": "RFeNnd3sLzY",
+   "start_ms": 444120,
+   "end_ms": 512560,
+   "grade": 2
+  }
+ ],
+ "fact-en-27": [
+  {
+   "video_id": "hXBK11AeYsw",
+   "start_ms": 6123840,
+   "end_ms": 6183520,
+   "grade": 2
+  },
+  {
+   "video_id": "hXBK11AeYsw",
+   "start_ms": 14490880,
+   "end_ms": 14549840,
+   "grade": 2
+  }
+ ],
+ "fact-en-28": [
+  {
+   "video_id": "WTMhigrUQcE",
+   "start_ms": 276360,
+   "end_ms": 340800,
+   "grade": 2
+  }
+ ],
+ "fact-en-30": [
+  {
+   "video_id": "JMkCOyEsOtQ",
+   "start_ms": 820099,
+   "end_ms": 876201,
+   "grade": 2
+  }
+ ]
+}

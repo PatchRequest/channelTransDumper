@@ -1,0 +1,109 @@
+"""Command line of the benchmark: snapshot, pool, import-judgments, evaluate."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from contextlib import closing
+from datetime import UTC, datetime
+from pathlib import Path
+
+from ..db import connect_read_only
+from ..embedding import LocalEmbedder
+from . import dataset, runner, snapshot
+from .variants import VARIANTS
+
+BENCHMARK_DIR = Path("benchmark")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="channeltrans-bench", description=__doc__)
+    parser.add_argument("--cases", type=Path, default=BENCHMARK_DIR / "cases.json")
+    parser.add_argument("--judgments", type=Path, default=BENCHMARK_DIR / "judgments.json")
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    snap = commands.add_parser("snapshot", help="freeze a consistent copy of a database")
+    snap.add_argument("source", type=Path)
+    snap.add_argument("destination", type=Path)
+
+    variants = ",".join(VARIANTS)
+    pool = commands.add_parser("pool", help="write unjudged candidates for relevance judging")
+    pool.add_argument("--db", type=Path, required=True, help="snapshot to query")
+    pool.add_argument("--variants", default=variants)
+    pool.add_argument("--depth", type=int, default=30)
+    pool.add_argument("--split", choices=["dev", "test"])
+    pool.add_argument("--out", type=Path, required=True)
+
+    imp = commands.add_parser("import-judgments", help="merge graded pool entries")
+    imp.add_argument("grades", type=Path, nargs="+", help="JSON: case ID → span key → grade")
+
+    ev = commands.add_parser("evaluate", help="metric table per variant")
+    ev.add_argument("--db", type=Path, required=True, help="snapshot to query")
+    ev.add_argument("--variants", default=variants)
+    ev.add_argument("--split", choices=["dev", "test"], required=True)
+    ev.add_argument("--record", metavar="NOTE", help="append the table to benchmark/RESULTS.md")
+    return parser
+
+
+def main() -> None:
+    args = _parser().parse_args()
+    try:
+        _run(args)
+    except (snapshot.SnapshotError, ValueError, KeyError) as exc:
+        sys.exit(f"Error: {exc}")
+
+
+def _run(args: argparse.Namespace) -> None:
+    if args.command == "snapshot":
+        print(json.dumps(snapshot.create_snapshot(args.source, args.destination), indent=2))
+        return
+    if args.command == "import-judgments":
+        judgments = dataset.load_judgments(args.judgments)
+        added = sum(
+            runner.merge_grades(judgments, json.loads(path.read_text())) for path in args.grades
+        )
+        dataset.save_judgments(args.judgments, judgments)
+        print(f"Added {added} judgments.")
+        return
+
+    snapshot.load_manifest(args.db)  # only frozen snapshots are measured
+    cases = [c for c in dataset.load_cases(args.cases) if args.split in (None, c.split)]
+    judgments = dataset.load_judgments(args.judgments)
+    variants = args.variants.split(",")
+    unknown = set(variants) - VARIANTS.keys()
+    if unknown:
+        raise ValueError(f"Unknown variants: {', '.join(sorted(unknown))}")
+    embedder = LocalEmbedder()
+    with closing(connect_read_only(args.db)) as conn:
+        if args.command == "pool":
+            pool = runner.build_pool(conn, embedder, cases, judgments, variants, args.depth)
+            args.out.write_text(json.dumps(pool, indent=1, ensure_ascii=False) + "\n")
+            print(f"{sum(len(c['candidates']) for c in pool)} candidates in {len(pool)} cases.")
+            return
+        table = runner.format_table(
+            runner.evaluate(conn, embedder, cases, judgments, variants)
+        )
+    print(table)
+    if args.record:
+        _record(args, table)
+
+
+def _record(args: argparse.Namespace, table: str) -> None:
+    manifest = snapshot.load_manifest(args.db)
+    commit = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain", "--", "src"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    entry = (
+        f"\n## {datetime.now(UTC).date()} – {args.record}\n\n"
+        f"- code: `{commit}`{' (uncommitted changes in src/)' if dirty else ''}\n"
+        f"- snapshot: `{args.db.name}` ({manifest['passages']} passages, "
+        f"created {manifest['created_at']})\n"
+        f"- split: {args.split}\n\n{table}\n"
+    )
+    with (BENCHMARK_DIR / "RESULTS.md").open("a") as results:
+        results.write(entry)

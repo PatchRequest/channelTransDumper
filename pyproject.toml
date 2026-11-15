@@ -13,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 channeltrans = "channeltrans.cli:main"
+channeltrans-bench = "channeltrans.bench.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

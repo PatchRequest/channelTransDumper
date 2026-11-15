@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any, Literal
 
 from .embedding import Embedder
@@ -15,6 +15,8 @@ MAX_QUERIES = 5
 _CANDIDATES = 50
 # Customary damping constant of reciprocal rank fusion.
 _RRF_K = 60
+
+Match = Literal["all", "any"]
 
 _TERM = re.compile(r'"([^"]*)"|(\S+)')
 
@@ -32,7 +34,7 @@ class QueryError(Exception):
     """The request is invalid (empty search, unknown channel, unknown ID)."""
 
 
-def build_fts_query(query: str, match: Literal["all", "any"]) -> str:
+def build_fts_query(query: str, match: Match) -> str:
     """Translate a free-form search query into a safe FTS5 expression.
 
     Words are searched individually, ``"…"`` as an exact phrase, ``word*`` as a prefix.
@@ -55,7 +57,7 @@ def search_passages(
     queries: Sequence[str],
     *,
     channel: str | None = None,
-    match: Literal["all", "any"] = "all",
+    match: Match = "all",
     limit: int = 10,
 ) -> list[dict[str, Any]]:
     """Hybrid search: full text and semantic similarity, fused into one ranking.
@@ -77,19 +79,14 @@ def search_passages(
     text_matches: set[int] = set()
     similarities: dict[int, float] = {}
     for query in queries:
-        text_ids = _text_candidates(conn, build_fts_query(query, match), channel_id, candidates)
-        semantic = _semantic_candidates(conn, embedder.embed_query(query), channel_id, candidates)
+        text_ids = text_candidates(conn, build_fts_query(query, match), channel_id, candidates)
+        semantic = semantic_candidates(conn, embedder.embed_query(query), channel_id, candidates)
         rankings += [text_ids, list(semantic)]
         text_matches.update(text_ids)
         for passage_id, similarity in semantic.items():
             similarities[passage_id] = max(similarity, similarities.get(passage_id, 0.0))
 
-    # Reciprocal rank fusion: passages ranked high in several lists win.
-    scores: dict[int, float] = {}
-    for ranking in rankings:
-        for rank, passage_id in enumerate(ranking):
-            scores[passage_id] = scores.get(passage_id, 0.0) + 1.0 / (_RRF_K + rank + 1)
-    best = sorted(scores, key=lambda passage_id: (-scores[passage_id], passage_id))[:limit]
+    best = fuse_rankings(rankings)[:limit]
 
     rows = conn.execute(
         f"""SELECT {_PASSAGE_COLUMNS} FROM passages p {_PASSAGE_JOINS}
@@ -107,9 +104,19 @@ def search_passages(
     ]
 
 
-def _text_candidates(
+def fuse_rankings(rankings: Iterable[Sequence[int]]) -> list[int]:
+    """Reciprocal rank fusion: passages ranked high in several lists come first."""
+    scores: dict[int, float] = {}
+    for ranking in rankings:
+        for rank, passage_id in enumerate(ranking):
+            scores[passage_id] = scores.get(passage_id, 0.0) + 1.0 / (_RRF_K + rank + 1)
+    return sorted(scores, key=lambda passage_id: (-scores[passage_id], passage_id))
+
+
+def text_candidates(
     conn: sqlite3.Connection, fts_query: str, channel_id: str | None, count: int
 ) -> list[int]:
+    """Passage IDs matching an FTS5 expression, best BM25 score first."""
     sql = """SELECT p.id FROM passages_fts
              JOIN passages p ON p.id = passages_fts.rowid
              JOIN videos v ON v.id = p.video_id
@@ -122,7 +129,7 @@ def _text_candidates(
     return [row[0] for row in conn.execute(sql, [*params, count])]
 
 
-def _semantic_candidates(
+def semantic_candidates(
     conn: sqlite3.Connection, query_vector: bytes, channel_id: str | None, count: int
 ) -> dict[int, float]:
     """Nearest neighbours of the query: passage ID → cosine similarity, best first."""

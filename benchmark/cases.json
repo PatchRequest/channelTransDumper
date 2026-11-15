@@ -1,0 +1,637 @@
+[
+ {
+  "id": "fact-en-01",
+  "queries": [
+   "Why can Harris hawk feathers be used to repair a goshawk's broken tail?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-02",
+  "queries": [
+   "Warum eignen sich Harris-Hawk-Federn, um gebrochene Habichtfedern zu ersetzen?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-03",
+  "queries": [
+   "How do Harris hawks signal each other silently during a group hunt?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-04",
+  "queries": [
+   "Wie verständigen sich Wüstenbussarde lautlos bei der Gruppenjagd?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-05",
+  "queries": [
+   "keeping a hawk warm in winter with fur on the legs"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-06",
+  "queries": [
+   "Ist der Harris Hawk wirklich ein Anfängervogel?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-07",
+  "queries": [
+   "What does the black solitary eagle prey on?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-08",
+  "queries": [
+   "Wie schütze ich meinen Greifvogel vor der Vogelgrippe?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-09",
+  "queries": [
+   "should I stay away from ducks when flying my hawk during avian influenza season"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-10",
+  "queries": [
+   "why should a hawk travel box have solid sides instead of bars"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-11",
+  "queries": [
+   "Warum sollte eine Transportbox für Greifvögel keine Gitterstäbe haben?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-12",
+  "queries": [
+   "how do you put a hood on a hawk step by step"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-13",
+  "queries": [
+   "which raptor species do not take well to hooding"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-14",
+  "queries": [
+   "Was sollte man einem Greifvogel während der Mauser füttern?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-15",
+  "queries": [
+   "should you keep a bird at flying weight during the molt"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-16",
+  "queries": [
+   "are passage birds trapped later in the season harder to train"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-17",
+  "queries": [
+   "Wie gewöhne ich meinem Vogel das Schreien ab?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-18",
+  "queries": [
+   "which peregrine subspecies has the biggest feet"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-19",
+  "queries": [
+   "Welche Wanderfalken lassen sich am angenehmsten abtragen, Terzel oder Weibchen?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-20",
+  "queries": [
+   "for hunting quail would he rather fly a Cooper's hawk or an aplomado falcon"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-21",
+  "queries": [
+   "why does a hawk throw up a pellet of fur and feathers"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-de-22",
+  "queries": [
+   "Wie beurteilt man am Brustbein, ob ein Greifvogel zu dick oder zu dünn ist?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-23",
+  "queries": [
+   "GPS tracker that also has radio telemetry as a backup"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-24",
+  "queries": [
+   "birds spend most of the day perching anyway, so why tether them instead of free lofting"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-25",
+  "queries": [
+   "Warum fliegen Eulen so leise?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-26",
+  "queries": [
+   "ointment for small cuts or pricks on a bird's foot"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-27",
+  "queries": [
+   "how bad is it if an eagle grabs you with its talons"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-28",
+  "queries": [
+   "do you need a permit to keep an Old World goshawk in the US"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-29",
+  "queries": [
+   "Warum ist ein Harris-Weibchen in der Brutzeit schwer zu händeln?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-30",
+  "queries": [
+   "what kind of glove do you need for a ferruginous hawk"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-31",
+  "queries": [
+   "Welchen Handschuh braucht man für einen Königsbussard?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-32",
+  "queries": [
+   "Why can't Harris hawks handle cold weather well and what helps?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-33",
+  "queries": [
+   "At what weight should you fly a bird when it is not responding to food?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-34",
+  "queries": [
+   "How long does it take to hood train a falcon?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-35",
+  "queries": [
+   "Wie lange dauert es, bis ein Greifvogel die Haube akzeptiert?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-36",
+  "queries": [
+   "What should you do first when your hawk flies off and is lost?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-37",
+  "queries": [
+   "Was tun, wenn der Greifvogel weggeflogen ist?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-38",
+  "queries": [
+   "Why are imprinted birds often so vocal?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-de-39",
+  "queries": [
+   "Was frisst ein Wüstenbussard in freier Wildbahn?"
+  ],
+  "kind": "fact",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "fact-en-40",
+  "queries": [
+   "How do you start training a crested caracara?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "fact-en-41",
+  "queries": [
+   "What is the difference between a passage bird and an eyass?"
+  ],
+  "kind": "fact",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-01",
+  "queries": [
+   "everything said about Harris hawks and cold weather or winter care"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-02",
+  "queries": [
+   "all advice on weight management and flying weight of hawks"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-de-03",
+  "queries": [
+   "alle Tipps zur Gewichtskontrolle bei Greifvögeln"
+  ],
+  "kind": "sweep",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-04",
+  "queries": [
+   "all statements about molting and what to do during the molt"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-en-05",
+  "queries": [
+   "everything about hoods and hood training"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-06",
+  "queries": [
+   "all advice on preventing or stopping screaming and vocal birds"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-de-07",
+  "queries": [
+   "alles zum Thema Prägung (Imprint) und ihre Folgen"
+  ],
+  "kind": "sweep",
+  "lang": "de",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-08",
+  "queries": [
+   "everything about telemetry, GPS trackers and finding a lost bird"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-en-09",
+  "queries": [
+   "all comparisons between goshawks and other accipiters like Cooper's hawks or Harris hawks"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-10",
+  "queries": [
+   "everything about training and flying a crested caracara"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-en-11",
+  "queries": [
+   "all advice on choosing a first bird of prey for a new falconer"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-de-12",
+  "queries": [
+   "alle Aussagen über die Haltung: freie Voliere gegenüber Anbinden"
+  ],
+  "kind": "sweep",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "sweep-en-13",
+  "queries": [
+   "everything about the dangers of handling large eagles"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-en-14",
+  "queries": [
+   "all statements about avian influenza and protecting falconry birds"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "test"
+ },
+ {
+  "id": "sweep-en-15",
+  "queries": [
+   "everything about trapping and flying passage birds"
+  ],
+  "kind": "sweep",
+  "lang": "en",
+  "split": "dev"
+ },
+ {
+  "id": "sweep-de-16",
+  "queries": [
+   "alles über Geschüh, Fußfesseln und Ausrüstung am Vogelbein"
+  ],
+  "kind": "sweep",
+  "lang": "de",
+  "split": "test"
+ },
+ {
+  "id": "mention-harris",
+  "queries": [
+   "Harris hawk"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "dev",
+  "terms": [
+   "harris hawk",
+   "harris hawks",
+   "harris's hawk",
+   "harris's hawks",
+   "harris hog",
+   "harris hogs",
+   "harrises",
+   "harris"
+  ]
+ },
+ {
+  "id": "mention-goshawk",
+  "queries": [
+   "goshawk"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "test",
+  "terms": [
+   "goshawk",
+   "goshawks",
+   "gosh hawk",
+   "gosh hawks",
+   "gos hawk",
+   "gos hawks",
+   "goss hawk",
+   "gossock",
+   "gossocks"
+  ]
+ },
+ {
+  "id": "mention-caracara",
+  "queries": [
+   "caracara"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "dev",
+  "terms": [
+   "caracara",
+   "caracaras"
+  ]
+ },
+ {
+  "id": "mention-peregrine",
+  "queries": [
+   "peregrine falcon"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "test",
+  "terms": [
+   "peregrine",
+   "peregrines"
+  ]
+ },
+ {
+  "id": "mention-kestrel",
+  "queries": [
+   "kestrel"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "dev",
+  "terms": [
+   "kestrel",
+   "kestrels"
+  ]
+ },
+ {
+  "id": "mention-ferruginous",
+  "queries": [
+   "ferruginous hawk"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "test",
+  "terms": [
+   "ferruginous",
+   "ferruginous hawk",
+   "ferruginous hawks",
+   "ferrugs",
+   "ferrug"
+  ]
+ },
+ {
+  "id": "mention-barn-owl",
+  "queries": [
+   "barn owl"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "dev",
+  "terms": [
+   "barn owl",
+   "barn owls"
+  ]
+ },
+ {
+  "id": "mention-imprint",
+  "queries": [
+   "imprinted birds"
+  ],
+  "kind": "mention",
+  "lang": "en",
+  "split": "test",
+  "terms": [
+   "imprint",
+   "imprints",
+   "imprinted",
+   "imprinting"
+  ]
+ }
+]
