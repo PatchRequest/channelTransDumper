@@ -64,6 +64,15 @@ def _parser() -> argparse.ArgumentParser:
     find.add_argument("--channel", help="channel ID, @handle or title")
     find.add_argument("--any", action="store_true", help="one search term is enough (not all)")
     find.add_argument("--limit", type=int, default=10)
+    find.add_argument("--offset", type=int, default=0, help="skip this many hits (paging)")
+
+    mentions = commands.add_parser(
+        "mentions", help="every passage naming one of the terms, grouped by video, JSON output"
+    )
+    mentions.add_argument("terms", nargs="+", metavar="term")
+    mentions.add_argument("--channel", help="channel ID, @handle or title")
+    mentions.add_argument("--limit", type=int, default=50, help="videos per page")
+    mentions.add_argument("--offset", type=int, default=0, help="skip this many videos")
 
     commands.add_parser("status", help="capture progress per channel, JSON output")
     commands.add_parser("reindex", help="rebuild passages and vectors from stored transcripts")
@@ -104,6 +113,11 @@ def _run(args: argparse.Namespace) -> int:
                 channel=args.channel,
                 match="any" if args.any else "all",
                 limit=args.limit,
+                offset=args.offset,
+            )
+        elif args.command == "mentions":
+            output = search.find_mentions(
+                conn, args.terms, channel=args.channel, limit=args.limit, offset=args.offset
             )
         else:
             output = search.channel_stats(conn)

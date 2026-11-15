@@ -14,10 +14,30 @@ Variant = Callable[[sqlite3.Connection, Embedder, Case, int], list[int]]
 
 def _hybrid(match: search.Match) -> Variant:
     def run(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
-        hits = search.search_passages(conn, embedder, case.queries, match=match, limit=depth)
-        return [hit["passage_id"] for hit in hits]
+        ids: list[int] = []
+        while len(ids) < depth:  # page through the ranking like an agent would
+            page = search.search_passages(
+                conn, embedder, case.queries, match=match, offset=len(ids),
+                limit=min(search.MAX_LIMIT, depth - len(ids)),
+            )
+            ids += [hit["passage_id"] for hit in page]
+            if len(page) < search.MAX_LIMIT:
+                break
+        return ids
 
     return run
+
+
+def _mentions(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
+    """All passages naming the case's queries as terms, video by video."""
+    result = search.find_mentions(conn, case.queries, limit=search.MAX_LIMIT)
+    ids = [p["passage_id"] for video in result["videos"] for p in video["passages"]]
+    offset = search.MAX_LIMIT
+    while offset < result["total_videos"]:
+        page = search.find_mentions(conn, case.queries, limit=search.MAX_LIMIT, offset=offset)
+        ids += [p["passage_id"] for video in page["videos"] for p in video["passages"]]
+        offset += search.MAX_LIMIT
+    return ids[:depth]
 
 
 def _semantic(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
@@ -65,5 +85,13 @@ VARIANTS: dict[str, Variant] = {
     "hybrid_any": _hybrid("any"),
     "semantic": _semantic,
     "fts_any": _fts_any,
+    "mentions": _mentions,
     "reranked": _Reranked(),
 }
+
+# Variants that only make sense for some case kinds (default: all kinds).
+APPLIES_TO: dict[str, frozenset[str]] = {"mentions": frozenset({"mention"})}
+
+
+def applies(variant: str, kind: str) -> bool:
+    return kind in APPLIES_TO.get(variant, frozenset({kind}))

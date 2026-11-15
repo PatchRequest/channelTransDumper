@@ -12,7 +12,7 @@ from ..embedding import Embedder
 from . import metrics
 from .dataset import Case, Judgment, Judgments
 from .metrics import Retrieved
-from .variants import VARIANTS
+from .variants import VARIANTS, applies
 
 
 # Hits requested per variant and case: four pages of 50.
@@ -60,7 +60,7 @@ def build_pool(
             continue  # mentions are measured objectively, without judgments
         known = judgments.get(case.id, [])
         candidates: dict[str, dict[str, Any]] = {}
-        for variant in variants:
+        for variant in (v for v in variants if applies(v, case.kind)):
             for passage in run_variant(conn, embedder, variant, case, depth):
                 key = span_key(passage)
                 if key not in candidates and metrics.match_judgment(passage, known) is None:
@@ -124,6 +124,8 @@ def evaluate(
     for variant in variants:
         per_group: dict[str, list[dict[str, float]]] = defaultdict(list)
         for case in scored:
+            if not applies(variant, case.kind):
+                continue
             ranked = run_variant(conn, embedder, variant, case, DEPTH)
             if case.kind == "mention":
                 truth = mention_truth[case.id]

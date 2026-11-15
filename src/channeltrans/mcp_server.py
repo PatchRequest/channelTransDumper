@@ -23,7 +23,9 @@ def build_server(db_path: Path) -> MCPServer:
             "Searchable transcripts of YouTube channels. Each passage is a roughly "
             "one-minute excerpt of what was said, with video, timestamp and link. "
             "Typical flow: list_channels → search_transcripts → get_passage_context for "
-            "the surroundings of a hit. Search is hybrid (full text plus semantic "
+            "the surroundings of a hit. For everything said about a named thing, use "
+            "find_mentions, which is exhaustive, and page through search_transcripts with "
+            "offset. Search is hybrid (full text plus semantic "
             "similarity). It works across languages, but hits are clearly better when "
             "the query is in the transcript's language, so translate the question into "
             "it rather than searching in the user's language. list_channels reports how "
@@ -61,6 +63,7 @@ def build_server(db_path: Path) -> MCPServer:
         channel: str | None = None,
         match: Literal["all", "any"] = "all",
         limit: int = 10,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         """Hybrid search over the transcripts; returns the most relevant passages.
 
@@ -77,7 +80,9 @@ def build_server(db_path: Path) -> MCPServer:
             phrase, word* a prefix.
         channel: optionally restrict to one channel (ID, @handle or title).
         match: full-text part – "all" = every term must occur, "any" = one is enough.
-        limit: number of hits (at most 50).
+        limit: number of hits per call (at most 50).
+        offset: skip this many hits to read further pages of the same ranking
+            (offset + limit at most 1000). Keep paging while hits stay relevant.
 
         For each hit, text_match tells whether the terms of some query occur literally,
         and semantic_similarity (0–1, the best over all queries; null if not among the
@@ -85,8 +90,25 @@ def build_server(db_path: Path) -> MCPServer:
         """
         with connection() as conn:
             return search.search_passages(
-                conn, embedder, queries, channel=channel, match=match, limit=limit
+                conn, embedder, queries, channel=channel, match=match, limit=limit, offset=offset
             )
+
+    @server.tool()
+    def find_mentions(
+        terms: list[str], channel: str | None = None, limit: int = 50, offset: int = 0
+    ) -> dict[str, Any]:
+        """Every passage that names one of the terms, grouped by video, most mentions first.
+
+        Exhaustive, unlike search_transcripts: use it to see all videos that mention a
+        species, person, place or piece of equipment, then read passages with
+        get_passage_context. Terms match as phrases with English stemming ("hawk" also
+        matches "hawks"). Add likely transcription errors as extra terms, e.g.
+        ["Harris hawk", "Harris hog"] or ["goshawk", "gosh hawk", "goss hawk"].
+        limit/offset page through the videos (at most 50 per call); total_passages and
+        total_videos give the full counts.
+        """
+        with connection() as conn:
+            return search.find_mentions(conn, terms, channel=channel, limit=limit, offset=offset)
 
     @server.tool()
     def get_passage_context(

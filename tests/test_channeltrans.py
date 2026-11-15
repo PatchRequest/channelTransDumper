@@ -226,6 +226,46 @@ def test_several_queries_are_fused(conn):
     assert found(["hooding falcon", "Haube Falken"]) == {"a", "b"}
 
 
+def test_pages_continue_the_same_ranking(conn):
+    client = FakeClient({f"v{i}": _video(f"v{i}", f"hawk number {i} " + "word " * i) for i in range(12)})
+    channel_id = ingest.discover(conn, client, "u")
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
+
+    def ids(**kwargs):
+        return [h["passage_id"] for h in search.search_passages(conn, EMBEDDER, ["hawk"], **kwargs)]
+
+    everything = ids(limit=12)
+    assert len(everything) == 12
+    assert ids(limit=5) + ids(limit=5, offset=5) + ids(limit=5, offset=10) == everything
+    assert ids(offset=12) == []
+    with pytest.raises(search.QueryError):
+        ids(limit=10, offset=search.MAX_DEPTH)
+    with pytest.raises(search.QueryError):
+        ids(offset=-1)
+
+
+def test_find_mentions_is_exhaustive_and_grouped_by_video(conn):
+    client = FakeClient(
+        {
+            # each line fills a passage of its own (about 1000 characters)
+            "a": _video("a", "My Harris hawk. " + "x " * 500, "Harris hawks again. " + "y " * 500, "goshawk"),
+            "b": _video("b", "a harris hog, the transcript says"),
+            "c": _video("c", "nothing relevant"),
+        }
+    )
+    channel_id = ingest.discover(conn, client, "u")
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
+
+    result = search.find_mentions(conn, ["Harris hawk", "harris hog"])
+    assert (result["total_passages"], result["total_videos"]) == (3, 2)
+    assert [v["video_id"] for v in result["videos"]] == ["a", "b"]  # most mentions first
+    assert [p["start"] for p in result["videos"][0]["passages"]] == ["0:00:00", "0:00:05"]
+    assert search.find_mentions(conn, ["Harris hawk"], offset=1, limit=1)["videos"] == []
+    assert search.find_mentions(conn, ["harris-hawk!"])["total_videos"] == 1  # punctuation
+    with pytest.raises(search.QueryError):
+        search.find_mentions(conn, ["  ", "!!"])
+
+
 def test_refetch_and_reindex_replace_passages_without_stale_search_hits(conn):
     client = FakeClient({"v": _video("v", "old wording about jesses")})
     channel_id = ingest.discover(conn, client, "u")

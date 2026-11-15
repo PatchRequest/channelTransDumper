@@ -11,8 +11,11 @@ from .embedding import Embedder
 
 MAX_LIMIT = 50
 MAX_QUERIES = 5
-# Number of candidates each of the two searches contributes before fusion.
-_CANDIDATES = 50
+MAX_TERMS = 20
+# Deepest position reachable by paging (offset + limit). Every search fuses this many
+# candidates from each list, so the fused ranking does not depend on the page asked
+# for and consecutive pages neither repeat nor skip passages.
+MAX_DEPTH = 1000
 # Customary damping constant of reciprocal rank fusion.
 _RRF_K = 60
 
@@ -59,6 +62,7 @@ def search_passages(
     channel: str | None = None,
     match: Match = "all",
     limit: int = 10,
+    offset: int = 0,
 ) -> list[dict[str, Any]]:
     """Hybrid search: full text and semantic similarity, fused into one ranking.
 
@@ -66,14 +70,16 @@ def search_passages(
     meaning – even with mistranscribed words or a query in another language.
     Several ``queries`` (e.g. the same question phrased in different languages) are
     searched separately and fused, so a passage found by several of them ranks higher.
-    ``match`` only affects the full-text part.
+    ``match`` only affects the full-text part. ``offset`` pages through the ranking.
     """
     queries = [query for query in queries if query.strip()]
     if not 1 <= len(queries) <= MAX_QUERIES:
         raise QueryError(f"Between 1 and {MAX_QUERIES} non-empty queries are required.")
-    channel_id = None if channel is None else resolve_channel(conn, channel)
     limit = _clamp(limit)
-    candidates = max(limit, _CANDIDATES)
+    if offset < 0 or offset + limit > MAX_DEPTH:
+        raise QueryError(f"offset + limit must be between 1 and {MAX_DEPTH}.")
+    channel_id = None if channel is None else resolve_channel(conn, channel)
+    candidates = MAX_DEPTH
 
     rankings: list[list[int]] = []
     text_matches: set[int] = set()
@@ -86,7 +92,9 @@ def search_passages(
         for passage_id, similarity in semantic.items():
             similarities[passage_id] = max(similarity, similarities.get(passage_id, 0.0))
 
-    best = fuse_rankings(rankings)[:limit]
+    best = fuse_rankings(rankings)[offset : offset + limit]
+    if not best:
+        return []
 
     rows = conn.execute(
         f"""SELECT {_PASSAGE_COLUMNS} FROM passages p {_PASSAGE_JOINS}
@@ -140,6 +148,68 @@ def semantic_candidates(
         params.append(channel_id)
     sql += " ORDER BY distance"
     return {row[0]: round(1.0 - row[1], 3) for row in conn.execute(sql, params)}
+
+
+def find_mentions(
+    conn: sqlite3.Connection,
+    terms: Sequence[str],
+    *,
+    channel: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Every passage containing one of the terms, grouped by video (most mentions first).
+
+    Unlike :func:`search_passages` this is exhaustive: no ranking cut-off, so a
+    researcher can see all videos that mention a name or term. Terms are matched as
+    phrases (English stemming, so "hawk" also matches "hawks"); list transcription
+    variants as separate terms. ``limit``/``offset`` page through the videos.
+    """
+    terms = [term for term in terms if term.strip()]
+    if not 1 <= len(terms) <= MAX_TERMS:
+        raise QueryError(f"Between 1 and {MAX_TERMS} non-empty terms are required.")
+    fts_query = " OR ".join(f'"{_phrase(term)}"' for term in terms)
+    sql = f"""SELECT p.id AS passage_id, p.video_id, p.start_ms,
+                     v.title AS video_title, v.upload_date, c.title AS channel
+              FROM passages_fts JOIN passages p ON p.id = passages_fts.rowid {_PASSAGE_JOINS}
+              WHERE passages_fts MATCH ?"""
+    params: list[Any] = [fts_query]
+    if channel is not None:
+        sql += " AND v.channel_id = ?"
+        params.append(resolve_channel(conn, channel))
+    videos: dict[str, dict[str, Any]] = {}
+    for row in conn.execute(sql + " ORDER BY p.video_id, p.start_ms", params):
+        video = videos.setdefault(
+            row["video_id"],
+            {
+                "video_id": row["video_id"],
+                "video_title": row["video_title"],
+                "channel": row["channel"],
+                "upload_date": row["upload_date"],
+                "passages": [],
+            },
+        )
+        video["passages"].append(
+            {
+                "passage_id": row["passage_id"],
+                "start": _clock(row["start_ms"]),
+                "url": _video_url(row["video_id"], row["start_ms"]),
+            }
+        )
+    ordered = sorted(videos.values(), key=lambda v: (-len(v["passages"]), v["video_id"]))
+    return {
+        "total_passages": sum(len(v["passages"]) for v in ordered),
+        "total_videos": len(ordered),
+        "videos": ordered[max(offset, 0) : max(offset, 0) + _clamp(limit)],
+    }
+
+
+def _phrase(term: str) -> str:
+    """A term as the body of an FTS5 phrase: punctuation becomes token separators."""
+    words = re.findall(r"\w+", term)
+    if not words:
+        raise QueryError(f"Term {term!r} contains no words.")
+    return " ".join(words)
 
 
 def passage_context(
