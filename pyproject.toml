@@ -9,6 +9,7 @@ dependencies = [
     "mcp>=2.3,<3",
     "fastembed>=0.9.1",
     "sqlite-vec>=0.1.9",
+    "jellyfish>=1.2",
 ]
 
 [project.scripts]

@@ -10,7 +10,7 @@ import sys
 from contextlib import closing
 from pathlib import Path
 
-from . import ingest, search
+from . import ingest, search, spelling
 from .db import DatabaseError, connect, connect_read_only
 from .embedding import LocalEmbedder
 from .youtube import FetchError, FetchSettings, YouTubeClient
@@ -74,6 +74,13 @@ def _parser() -> argparse.ArgumentParser:
     mentions.add_argument("--limit", type=int, default=50, help="videos per page")
     mentions.add_argument("--offset", type=int, default=0, help="skip this many videos")
 
+    spell = commands.add_parser(
+        "spellings", help="transcription variants of a term found in the transcripts, JSON output"
+    )
+    spell.add_argument("term")
+    spell.add_argument("--channel", help="channel ID, @handle or title")
+    spell.add_argument("--limit", type=int, default=20)
+
     commands.add_parser("status", help="capture progress per channel, JSON output")
     commands.add_parser("reindex", help="rebuild passages and vectors from stored transcripts")
     commands.add_parser("mcp", help="start the MCP server on stdio")
@@ -118,6 +125,10 @@ def _run(args: argparse.Namespace) -> int:
         elif args.command == "mentions":
             output = search.find_mentions(
                 conn, args.terms, channel=args.channel, limit=args.limit, offset=args.offset
+            )
+        elif args.command == "spellings":
+            output = spelling.suggest_spellings(
+                conn, args.term, channel=args.channel, limit=args.limit
             )
         else:
             output = search.channel_stats(conn)

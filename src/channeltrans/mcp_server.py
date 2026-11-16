@@ -11,7 +11,7 @@ from typing import Any, Literal
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
-from . import search
+from . import search, spelling
 from .db import DatabaseError, connect_read_only
 from .embedding import LocalEmbedder
 
@@ -23,9 +23,11 @@ def build_server(db_path: Path) -> MCPServer:
             "Searchable transcripts of YouTube channels. Each passage is a roughly "
             "one-minute excerpt of what was said, with video, timestamp and link. "
             "Typical flow: list_channels → search_transcripts → get_passage_context for "
-            "the surroundings of a hit. For everything said about a named thing, use "
-            "find_mentions, which is exhaustive, and page through search_transcripts with "
-            "offset. Search is hybrid (full text plus semantic "
+            "the surroundings of a hit. For everything said about a named thing, call "
+            "suggest_spellings for its distinctive word (\"peregrine\", not \"peregrine "
+            "falcon\"), then find_mentions with the term plus the suggestions that really "
+            "mean it; find_mentions is exhaustive. Page through search_transcripts with "
+            "offset for everything on a topic. Search is hybrid (full text plus semantic "
             "similarity). It works across languages, but hits are clearly better when "
             "the query is in the transcript's language, so translate the question into "
             "it rather than searching in the user's language. list_channels reports how "
@@ -33,8 +35,10 @@ def build_server(db_path: Path) -> MCPServer:
             "single outlier is usually a misdetected music clip and can be ignored. Pass "
             "one query per relevant language, or rephrasings of the question, as several "
             "queries in one call. Most transcripts are auto-generated: proper names and "
-            "technical terms may be misspelled. For exhaustive research, search several "
-            "phrasings and raise the limit."
+            "technical terms may be misspelled. For exhaustive research on a topic, add a "
+            "short keyword query (e.g. \"goshawk molt weight\") next to the question and "
+            "keep paging: that reaches clearly more of the relevant passages, at a small "
+            "cost to the first hits."
         ),
     )
     embedder = LocalEmbedder()
@@ -102,13 +106,30 @@ def build_server(db_path: Path) -> MCPServer:
         Exhaustive, unlike search_transcripts: use it to see all videos that mention a
         species, person, place or piece of equipment, then read passages with
         get_passage_context. Terms match as phrases with English stemming ("hawk" also
-        matches "hawks"). Add likely transcription errors as extra terms, e.g.
-        ["Harris hawk", "Harris hog"] or ["goshawk", "gosh hawk", "goss hawk"].
+        matches "hawks"). Transcripts misspell names, so add the transcription variants
+        as extra terms (up to 20): get them from suggest_spellings, e.g.
+        ["goshawk", "gosh hawk", "goss hawk", "gossock"].
         limit/offset page through the videos (at most 50 per call); total_passages and
         total_videos give the full counts.
         """
         with connection() as conn:
             return search.find_mentions(conn, terms, channel=channel, limit=limit, offset=offset)
+
+    @server.tool()
+    def suggest_spellings(term: str, channel: str | None = None, limit: int = 20) -> dict[str, Any]:
+        """Transcription variants of a term that occur in the transcripts.
+
+        Automatic captions mangle names ("goshawk" → "gosh hawk", "gossock"; "kestrel" →
+        "kestral"). Returns spellings close to the term in letters and sound that find
+        passages the term itself misses: each with the number of passages it adds and an
+        example (match in «guillemets»). Closest spellings come first. Many suggestions
+        are different words that merely sound alike – judge each by its example and
+        pass only the real variants to find_mentions. Use the distinctive word of a name
+        (at least 5 letters): "peregrine" rather than "peregrine falcon".
+        limit: number of suggestions (at most 50).
+        """
+        with connection() as conn:
+            return spelling.suggest_spellings(conn, term, channel=channel, limit=limit)
 
     @server.tool()
     def get_passage_context(

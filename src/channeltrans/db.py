@@ -83,8 +83,29 @@ CREATE TRIGGER passages_vectors_delete AFTER DELETE ON passages BEGIN
 END;
 """
 
+# Unstemmed word index and its vocabulary, for finding transcription variants of a term
+# (see spelling.py). passages_fts stems words, so its vocabulary cannot serve this.
+_SCHEMA_V3 = """
+CREATE VIRTUAL TABLE passages_words USING fts5(
+    text,
+    content = 'passages',
+    content_rowid = 'id',
+    tokenize = 'unicode61 remove_diacritics 2'
+);
+INSERT INTO passages_words (passages_words) VALUES ('rebuild');
+
+CREATE TRIGGER passages_words_insert AFTER INSERT ON passages BEGIN
+    INSERT INTO passages_words (rowid, text) VALUES (new.id, new.text);
+END;
+CREATE TRIGGER passages_words_delete AFTER DELETE ON passages BEGIN
+    INSERT INTO passages_words (passages_words, rowid, text) VALUES ('delete', old.id, old.text);
+END;
+
+CREATE VIRTUAL TABLE passages_vocabulary USING fts5vocab(passages_words, 'row');
+"""
+
 # Schema steps in order; the schema version is the number of steps applied.
-_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2]
+_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3]
 SCHEMA_VERSION = len(_SCHEMA_STEPS)
 
 

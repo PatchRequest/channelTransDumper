@@ -5,8 +5,9 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Callable
 
-from .. import search
+from .. import search, spelling
 from ..embedding import MODEL_CACHE, Embedder
+from . import metrics
 from .dataset import Case
 
 Variant = Callable[[sqlite3.Connection, Embedder, Case, int], list[int]]
@@ -29,16 +30,38 @@ def _hybrid(match: search.Match, with_keywords: bool = False) -> Variant:
     return run
 
 
-def _mentions(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
-    """All passages naming the case's queries as terms, video by video."""
-    result = search.find_mentions(conn, case.queries, limit=search.MAX_LIMIT)
-    ids = [p["passage_id"] for video in result["videos"] for p in video["passages"]]
-    offset = search.MAX_LIMIT
-    while offset < result["total_videos"]:
-        page = search.find_mentions(conn, case.queries, limit=search.MAX_LIMIT, offset=offset)
+def _all_mentions(conn: sqlite3.Connection, terms: list[str], depth: int) -> list[int]:
+    """Every passage find_mentions returns for the terms, paging through all videos."""
+    ids: list[int] = []
+    offset = 0
+    while True:
+        page = search.find_mentions(conn, terms, limit=search.MAX_LIMIT, offset=offset)
         ids += [p["passage_id"] for video in page["videos"] for p in video["passages"]]
         offset += search.MAX_LIMIT
-    return ids[:depth]
+        if offset >= page["total_videos"]:
+            return ids[:depth]
+
+
+def _mentions(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
+    """All passages naming the case's queries as terms, video by video."""
+    return _all_mentions(conn, case.queries, depth)
+
+
+def _mentions_spelled(
+    conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int
+) -> list[int]:
+    """find_mentions with the queries plus the suggest_spellings results a perfect judge
+    would accept (those the case lists as spellings of the term): the upper bound for an
+    agent using both tools with the default number of suggestions."""
+    known = metrics.mention_pattern(case.terms)
+    terms = list(case.queries)
+    for query in case.queries:
+        terms += [
+            s["spelling"]
+            for s in spelling.suggest_spellings(conn, query)["suggestions"]
+            if known.fullmatch(s["spelling"])
+        ]
+    return _all_mentions(conn, terms[: search.MAX_TERMS], depth)
 
 
 def _semantic(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
@@ -88,12 +111,14 @@ VARIANTS: dict[str, Variant] = {
     "semantic": _semantic,
     "fts_any": _fts_any,
     "mentions": _mentions,
+    "mentions_spelled": _mentions_spelled,
     "reranked": _Reranked(),
 }
 
 # Variants that only make sense for some case kinds (default: all kinds).
 APPLIES_TO: dict[str, frozenset[str]] = {
     "mentions": frozenset({"mention"}),
+    "mentions_spelled": frozenset({"mention"}),
     "hybrid_kw": frozenset({"fact", "sweep"}),
 }
 

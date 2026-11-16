@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ..db import connect_read_only
+from ..db import SCHEMA_VERSION, connect, connect_read_only
 
 
 class SnapshotError(Exception):
@@ -24,7 +24,9 @@ def create_snapshot(source: Path, destination: Path) -> dict[str, Any]:
     """Copy ``source`` with SQLite's backup API (safe while a sync writes) and verify it.
 
     A plain file copy is not safe: the database runs in WAL mode, so recent commits
-    may only exist in the ``-wal`` file.
+    may only exist in the ``-wal`` file. The copy is upgraded to the current schema, so
+    an older snapshot can be carried forward by snapshotting it again; upgrades only add
+    derived structures (indexes), never change passages.
     """
     if destination.exists():
         raise SnapshotError(f"{destination} already exists; snapshots are never overwritten.")
@@ -32,11 +34,13 @@ def create_snapshot(source: Path, destination: Path) -> dict[str, Any]:
     with closing(sqlite3.connect(f"{source.resolve().as_uri()}?mode=ro", uri=True)) as src:
         with closing(sqlite3.connect(destination)) as dst:
             src.backup(dst)
-            dst.execute("PRAGMA journal_mode = DELETE")
+    with closing(connect(destination)) as dst:  # applies pending schema steps
+        dst.execute("PRAGMA journal_mode = DELETE")
 
     manifest = describe(destination) | {
         "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "source": str(source),
+        "schema_version": SCHEMA_VERSION,
     }
     if manifest["passages"] != manifest["vectors"]:
         destination.unlink()

@@ -59,7 +59,8 @@ Default path `~/.channeltrans/transcripts.db`, changeable with `--db` or `CHANNE
 | `videos`          | all videos with status `pending`/`done`/`no_transcript`/`failed`     |
 | `transcripts`     | raw transcript per video as timestamped lines (JSON)                 |
 | `passages`        | sections of about 1000 characters (roughly one minute), timestamped  |
-| `passages_fts`    | FTS5 full-text index over `passages`                                 |
+| `passages_fts`    | FTS5 full-text index over `passages` (stemmed)                       |
+| `passages_words`  | unstemmed FTS5 index; its vocabulary feeds spelling suggestions      |
 | `passage_vectors` | embedding per passage (sqlite-vec), computed from video title + text |
 
 `channeltrans reindex` rebuilds passages and vectors from the raw transcripts (after
@@ -71,6 +72,8 @@ changing `PASSAGE_TARGET_CHARS`) without querying YouTube again. Querying
 ```bash
 uv run channeltrans search 'hawk* "weight control"' --channel @somechannel
 uv run channeltrans search "how do I stop my hawk screaming" "hawk screaming at home"
+uv run channeltrans spellings goshawk
+uv run channeltrans mentions goshawk "gosh hawk" "goss hawk" gossock
 uv run channeltrans status
 ```
 
@@ -89,7 +92,18 @@ Every search runs twice and is fused into one ranking (reciprocal rank fusion):
   question first raised the share of correct first hits from 5 of 12 to 9 of 12.
 
 Output is JSON. For each hit, `text_match` tells whether the terms occur literally and
-`semantic_similarity` (0–1) how close it is in meaning.
+`semantic_similarity` (0–1) how close it is in meaning. `--offset` pages through the
+same ranking. For research that must not miss anything on a topic, add a short keyword
+query next to the question and keep paging: in the benchmark this raised the share of
+relevant passages within 200 hits from 0.88 to 0.96, at a small cost to the first ten.
+
+**Everything about a named thing.** `mentions` returns every passage naming one of the
+terms, grouped by video – exhaustive, not ranked. Automatic captions misspell names
+("goshawk" also appears as "gosh hawk", "goss hawk", "gossock"), so `spellings` lists
+the variants that occur in the transcripts, each with the number of passages it adds
+and an example; many are sound-alikes of other words, so pick the real ones and pass
+them to `mentions`. In the benchmark, an agent doing so found 99–100 % of the mentions
+of eight bird names and terms, against 7–99 % with the plain term.
 
 ## MCP server for agents
 
@@ -97,8 +111,10 @@ Output is JSON. For each hit, `text_match` tells whether the terms occur literal
 claude mcp add channeltrans -- uv run --directory /path/to/channelTransDumper channeltrans mcp
 ```
 
-Tools: `list_channels`, `search_transcripts`, `get_passage_context`,
-`get_video_transcript`, `list_videos`. The server opens the database read-only.
+Tools: `list_channels`, `search_transcripts`, `find_mentions`, `suggest_spellings`,
+`get_passage_context`, `get_video_transcript`, `list_videos`. The server opens the
+database read-only; after an update that changes the schema, run `channeltrans sync`
+or `channeltrans reindex` once to upgrade the database.
 
 ## Tests
 

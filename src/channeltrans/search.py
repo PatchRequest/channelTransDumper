@@ -168,7 +168,7 @@ def find_mentions(
     terms = [term for term in terms if term.strip()]
     if not 1 <= len(terms) <= MAX_TERMS:
         raise QueryError(f"Between 1 and {MAX_TERMS} non-empty terms are required.")
-    fts_query = " OR ".join(f'"{_phrase(term)}"' for term in terms)
+    fts_query = " OR ".join(f'"{fts_phrase(term)}"' for term in terms)
     sql = f"""SELECT p.id AS passage_id, p.video_id, p.start_ms,
                      v.title AS video_title, v.upload_date, c.title AS channel
               FROM passages_fts JOIN passages p ON p.id = passages_fts.rowid {_PASSAGE_JOINS}
@@ -204,7 +204,7 @@ def find_mentions(
     }
 
 
-def _phrase(term: str) -> str:
+def fts_phrase(term: str) -> str:
     """A term as the body of an FTS5 phrase: punctuation becomes token separators."""
     words = re.findall(r"\w+", term)
     if not words:
