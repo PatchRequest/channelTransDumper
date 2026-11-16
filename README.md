@@ -61,6 +61,7 @@ Default path `~/.channeltrans/transcripts.db`, changeable with `--db` or `CHANNE
 | `passages`        | sections of about 1000 characters (roughly one minute), timestamped  |
 | `passages_fts`    | FTS5 full-text index over `passages` (stemmed)                       |
 | `passages_words`  | unstemmed FTS5 index; its vocabulary feeds spelling suggestions      |
+| `passage_duplicates` | passages repeating speech of another video (compilations, clips)  |
 | `passage_vectors` | embedding per passage (sqlite-vec), computed from video title + text |
 
 `channeltrans reindex` rebuilds passages and vectors from the raw transcripts (after
@@ -92,8 +93,10 @@ Every search runs twice and is fused into one ranking (reciprocal rank fusion):
   question first raised the share of correct first hits from 5 of 12 to 9 of 12.
 
 Output is JSON. For each hit, `text_match` tells whether the terms occur literally and
-`semantic_similarity` (0–1) how close it is in meaning. `--offset` pages through the
-same ranking. For research that must not miss anything on a topic, add a short keyword
+`semantic_similarity` (0–1) how close it is in meaning. A passage that repeats speech
+from a better hit of another video (compilations, re-uploaded clips: at least half of
+its word 5-grams recur) is folded into that hit and listed under `duplicates`, so a
+page shows distinct statements. `--offset` pages through the same ranking. For research that must not miss anything on a topic, add a short keyword
 query next to the question and keep paging: in the benchmark this raised the share of
 relevant passages within 200 hits from 0.88 to 0.96, at a small cost to the first ten.
 

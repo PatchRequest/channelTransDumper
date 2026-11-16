@@ -49,6 +49,11 @@ ranking is still unjudged.
 
 ## Metrics
 
+Judged spans of different videos that repeat the same speech (compilations, clips:
+at least half of the word 5-grams shared) form one information unit, which counts once
+in all fact and sweep metrics: seeing the same statement twice teaches an agent nothing
+new.
+
 - `nDCG@10`: ranking quality of the first ten hits (graded).
 - `R@10`, `R@50`: share of the relevant judged spans among the first 10 / 50 hits.
 - `unjudged@10`: share of the first ten hits without a judgment; high values make the

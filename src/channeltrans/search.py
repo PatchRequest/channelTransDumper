@@ -71,6 +71,10 @@ def search_passages(
     Several ``queries`` (e.g. the same question phrased in different languages) are
     searched separately and fused, so a passage found by several of them ranks higher.
     ``match`` only affects the full-text part. ``offset`` pages through the ranking.
+
+    Passages repeating speech from a better-ranked hit of another video (see
+    duplicates.py) are folded into that hit and listed under ``duplicates``, so each
+    page shows distinct statements without hiding where else they were said.
     """
     queries = [query for query in queries if query.strip()]
     if not 1 <= len(queries) <= MAX_QUERIES:
@@ -92,9 +96,12 @@ def search_passages(
         for passage_id, similarity in semantic.items():
             similarities[passage_id] = max(similarity, similarities.get(passage_id, 0.0))
 
-    best = fuse_rankings(rankings)[offset : offset + limit]
-    if not best:
+    groups = collapse_duplicates(conn, fuse_rankings(rankings))
+    page = list(groups.items())[offset : offset + limit]
+    if not page:
         return []
+    best = [head for head, _ in page]
+    folded = {head: members for head, members in page}
 
     rows = conn.execute(
         f"""SELECT {_PASSAGE_COLUMNS} FROM passages p {_PASSAGE_JOINS}
@@ -107,8 +114,61 @@ def search_passages(
         | {
             "text_match": passage_id in text_matches,
             "semantic_similarity": similarities.get(passage_id),
+            "duplicates": _duplicate_refs(conn, folded[passage_id]),
         }
         for passage_id in best
+    ]
+
+
+def collapse_duplicates(conn: sqlite3.Connection, ranking: list[int]) -> dict[int, list[int]]:
+    """Fold duplicates into the best-ranked passage of their group.
+
+    Returns head → folded passages, heads in ranking order. A passage joins the group
+    of the first head it (directly) duplicates; folded passages keep ranking order.
+    """
+    linked: dict[int, list[int]] = {}
+    for start in range(0, len(ranking), 900):  # stay below SQLite's parameter limit
+        chunk = ranking[start : start + 900]
+        for passage_id, duplicate_id in conn.execute(
+            f"""SELECT passage_id, duplicate_id FROM passage_duplicates
+                WHERE passage_id IN ({",".join("?" * len(chunk))})""",
+            chunk,
+        ):
+            linked.setdefault(passage_id, []).append(duplicate_id)
+    position = {passage_id: rank for rank, passage_id in enumerate(ranking)}
+    groups: dict[int, list[int]] = {}
+    head_of: dict[int, int] = {}
+    for passage_id in ranking:
+        heads = [head_of[other] for other in linked.get(passage_id, []) if other in head_of]
+        if heads:
+            head = min(heads, key=position.__getitem__)
+            groups[head].append(passage_id)
+            head_of[passage_id] = head
+        else:
+            groups[passage_id] = []
+            head_of[passage_id] = passage_id
+    return groups
+
+
+def _duplicate_refs(conn: sqlite3.Connection, passage_ids: list[int]) -> list[dict[str, Any]]:
+    if not passage_ids:
+        return []
+    rows = conn.execute(
+        f"""SELECT p.id, p.video_id, p.start_ms, v.title FROM passages p
+            JOIN videos v ON v.id = p.video_id
+            WHERE p.id IN ({",".join("?" * len(passage_ids))})""",
+        passage_ids,
+    )
+    by_id = {row[0]: row for row in rows}
+    return [
+        {
+            "passage_id": passage_id,
+            "video_id": by_id[passage_id][1],
+            "video_title": by_id[passage_id][3],
+            "start": _clock(by_id[passage_id][2]),
+            "url": _video_url(by_id[passage_id][1], by_id[passage_id][2]),
+        }
+        for passage_id in passage_ids
     ]
 
 

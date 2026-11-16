@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .. import duplicates
 from ..db import SCHEMA_VERSION, connect, connect_read_only
 
 
@@ -35,6 +36,8 @@ def create_snapshot(source: Path, destination: Path) -> dict[str, Any]:
         with closing(sqlite3.connect(destination)) as dst:
             src.backup(dst)
     with closing(connect(destination)) as dst:  # applies pending schema steps
+        # Derived links a newer schema adds; computed from the copied vectors and text.
+        duplicates.link_missing(dst)
         dst.execute("PRAGMA journal_mode = DELETE")
 
     manifest = describe(destination) | {
@@ -58,6 +61,7 @@ def describe(snapshot: Path) -> dict[str, Any]:
         counts = conn.execute(
             """SELECT (SELECT count(*) FROM passages) AS passages,
                       (SELECT count(*) FROM passage_vectors) AS vectors,
+                      (SELECT count(*) FROM passage_duplicates) / 2 AS duplicate_pairs,
                       (SELECT count(*) FROM transcripts) AS transcripts"""
         ).fetchone()
         channels = {

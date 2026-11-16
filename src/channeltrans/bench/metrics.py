@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from .dataset import Judgment
@@ -36,31 +37,52 @@ def match_judgment(passage: Retrieved, judgments: list[Judgment]) -> Judgment | 
     return best
 
 
-def ndcg(ranked: list[Retrieved], judgments: list[Judgment], k: int) -> float:
+Units = Mapping[Judgment, int]
+"""Information unit of each judged span: spans of different videos repeating the same
+speech share a unit and count once. Spans missing from the mapping are units of their own."""
+
+
+def ndcg(
+    ranked: list[Retrieved], judgments: list[Judgment], k: int, units: Units | None = None
+) -> float:
     """Normalised discounted cumulative gain; unjudged passages count as grade 0.
 
-    A judged span counts once, even if several retrieved passages match it.
+    An information unit counts once (with its best grade), however many retrieved
+    passages match its spans.
     """
-    seen: set[Judgment] = set()
+    grades = _unit_grades(judgments, units)
+    seen: set[object] = set()
     gains = []
     for passage in ranked[:k]:
         judgment = match_judgment(passage, judgments)
-        if judgment is None or judgment in seen:
+        unit = None if judgment is None else _unit(judgment, units)
+        if unit is None or unit in seen:
             gains.append(0)
         else:
-            seen.add(judgment)
-            gains.append(judgment.grade)
-    ideal = sorted((j.grade for j in judgments), reverse=True)[:k]
+            seen.add(unit)
+            gains.append(grades[unit])
+    ideal = sorted(grades.values(), reverse=True)[:k]
     ideal_dcg = _dcg(ideal)
     return _dcg(gains) / ideal_dcg if ideal_dcg else 0.0
 
 
-def recall(ranked: list[Retrieved], judgments: list[Judgment], k: int, min_grade: int = 1) -> float:
-    """Share of relevant judged spans found among the first ``k`` passages."""
-    relevant = {j for j in judgments if j.grade >= min_grade}
+def recall(
+    ranked: list[Retrieved],
+    judgments: list[Judgment],
+    k: int,
+    min_grade: int = 1,
+    units: Units | None = None,
+) -> float:
+    """Share of relevant information units found among the first ``k`` passages."""
+    grades = _unit_grades(judgments, units)
+    relevant = {unit for unit, grade in grades.items() if grade >= min_grade}
     if not relevant:
         return 0.0
-    found = {match_judgment(p, judgments) for p in ranked[:k]}
+    found = set()
+    for passage in ranked[:k]:
+        judgment = match_judgment(passage, judgments)
+        if judgment is not None:
+            found.add(_unit(judgment, units))
     return len(relevant & found) / len(relevant)
 
 
@@ -70,6 +92,18 @@ def unjudged(ranked: list[Retrieved], judgments: list[Judgment], k: int) -> floa
     if not top:
         return 0.0
     return sum(match_judgment(p, judgments) is None for p in top) / len(top)
+
+
+def _unit(judgment: Judgment, units: Units | None) -> object:
+    return judgment if units is None or judgment not in units else ("unit", units[judgment])
+
+
+def _unit_grades(judgments: list[Judgment], units: Units | None) -> dict[object, int]:
+    grades: dict[object, int] = {}
+    for judgment in judgments:
+        unit = _unit(judgment, units)
+        grades[unit] = max(grades.get(unit, 0), judgment.grade)
+    return grades
 
 
 def mention_pattern(terms: list[str]) -> re.Pattern[str]:

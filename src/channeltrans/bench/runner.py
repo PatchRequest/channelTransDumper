@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Any
 
+from .. import duplicates
 from ..embedding import Embedder
 from . import metrics
 from .dataset import Case, Judgment, Judgments
@@ -127,6 +128,11 @@ def evaluate(
     ]
     unjudged_cases = [case.id for case in cases if case not in scored]
     mention_truth = {case.id: _mentions(conn, case) for case in scored if case.kind == "mention"}
+    case_units = {
+        case.id: information_units(conn, judgments[case.id])
+        for case in scored
+        if case.kind != "mention"
+    }
     rows = []
     for variant in variants:
         per_group: dict[str, list[dict[str, float]]] = defaultdict(list)
@@ -150,11 +156,12 @@ def evaluate(
             else:
                 ranked = run_variant(conn, embedder, variant, case, DEPTH)
                 judged = judgments[case.id]
+                units = case_units[case.id]
                 values = {
-                    "nDCG@10": metrics.ndcg(ranked, judged, 10),
-                    "R@10": metrics.recall(ranked, judged, 10),
-                    "R@50": metrics.recall(ranked, judged, 50),
-                    f"R@{DEPTH}": metrics.recall(ranked, judged, DEPTH),
+                    "nDCG@10": metrics.ndcg(ranked, judged, 10, units),
+                    "R@10": metrics.recall(ranked, judged, 10, units=units),
+                    "R@50": metrics.recall(ranked, judged, 50, units=units),
+                    f"R@{DEPTH}": metrics.recall(ranked, judged, DEPTH, units=units),
                     "unjudged@10": metrics.unjudged(ranked, judged, 10),
                 }
             per_group[f"{case.kind}/{case.lang}"].append(values)
@@ -189,6 +196,38 @@ def span_key(passage: Retrieved) -> str:
 def parse_span_key(key: str) -> tuple[str, int, int]:
     video_id, start_ms, end_ms = key.rsplit("|", 2)
     return video_id, int(start_ms), int(end_ms)
+
+
+def information_units(conn: sqlite3.Connection, judged: list[Judgment]) -> dict[Judgment, int]:
+    """Group judged spans of different videos that repeat the same speech.
+
+    Uses the same rule as the search (duplicates.MIN_OVERLAP of shared word 5-grams),
+    but compares every pair of spans directly instead of relying on the search's
+    neighbour-based links, so the measure does not depend on the system under test.
+    """
+    shingles = []
+    for judgment in judged:
+        row = conn.execute(
+            """SELECT text FROM passages WHERE video_id = ? AND end_ms > ? AND start_ms < ?
+               ORDER BY abs(start_ms - ?) LIMIT 1""",
+            (judgment.video_id, judgment.start_ms, judgment.end_ms, judgment.start_ms),
+        ).fetchone()
+        shingles.append(duplicates.shingles(row[0]) if row else set())
+    parent = list(range(len(judged)))
+
+    def root(index: int) -> int:
+        while parent[index] != index:
+            index = parent[index]
+        return index
+
+    for a in range(len(judged)):
+        for b in range(a):
+            if (
+                judged[a].video_id != judged[b].video_id
+                and duplicates.overlap(shingles[a], shingles[b]) >= duplicates.MIN_OVERLAP
+            ):
+                parent[root(a)] = root(b)
+    return {judgment: root(index) for index, judgment in enumerate(judged)}
 
 
 def _mentions(conn: sqlite3.Connection, case: Case) -> set[int]:

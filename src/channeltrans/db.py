@@ -104,8 +104,24 @@ END;
 CREATE VIRTUAL TABLE passages_vocabulary USING fts5vocab(passages_words, 'row');
 """
 
+# Passages repeating speech from another video (see duplicates.py), stored in both
+# directions, and which passages have been checked for duplicates.
+_SCHEMA_V4 = """
+CREATE TABLE passage_duplicates (
+    passage_id   INTEGER NOT NULL,
+    duplicate_id INTEGER NOT NULL,
+    PRIMARY KEY (passage_id, duplicate_id)
+) WITHOUT ROWID;
+CREATE TABLE duplicate_scans (passage_id INTEGER PRIMARY KEY);
+
+CREATE TRIGGER passages_duplicates_delete AFTER DELETE ON passages BEGIN
+    DELETE FROM passage_duplicates WHERE passage_id = old.id OR duplicate_id = old.id;
+    DELETE FROM duplicate_scans WHERE passage_id = old.id;
+END;
+"""
+
 # Schema steps in order; the schema version is the number of steps applied.
-_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3]
+_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3, _SCHEMA_V4]
 SCHEMA_VERSION = len(_SCHEMA_STEPS)
 
 

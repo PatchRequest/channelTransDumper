@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from . import duplicates
 from .embedding import Embedder
 from .transcript import Cue, build_passages, cues_from_json, cues_to_json
 from .youtube import FetchedVideo, FetchError, VideoNotReady, YouTubeClient
@@ -84,8 +85,8 @@ def process_queue(
     options: SyncOptions,
 ) -> SyncResult:
     """Work through a channel's open videos, newest first."""
-    # Catch up on vectors an interrupted run or an older database still owes.
-    embed_missing(conn, embedder)
+    # Catch up on what an interrupted run or an older database still owes.
+    index_missing(conn, embedder)
     queue = conn.execute(
         """SELECT id, title FROM videos
            WHERE channel_id = ?
@@ -123,7 +124,7 @@ def process_queue(
 
         consecutive_failures = 0
         passages = _store(conn, video)
-        embed_missing(conn, embedder)
+        index_missing(conn, embedder)
         if video.transcript is None:
             result.no_transcript += 1
             log.info("%s: no transcript available", prefix)
@@ -139,8 +140,14 @@ def reindex(conn: sqlite3.Connection, embedder: Embedder) -> int:
     with conn:
         for row in rows:
             _replace_passages(conn, row["video_id"], cues_from_json(row["cues"]))
-    embed_missing(conn, embedder)
+    index_missing(conn, embedder)
     return len(rows)
+
+
+def index_missing(conn: sqlite3.Connection, embedder: Embedder) -> None:
+    """Bring the derived indexes up to date: vectors, then duplicate links (need vectors)."""
+    embed_missing(conn, embedder)
+    duplicates.link_missing(conn)
 
 
 def embed_missing(conn: sqlite3.Connection, embedder: Embedder) -> int:
