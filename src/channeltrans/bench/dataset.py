@@ -31,6 +31,8 @@ class Case:
     split: Split
     # mention cases only: spellings that count as a mention, incl. transcription errors
     terms: list[str] = field(default_factory=list)
+    # ID of a case asking the same question in another language: judged together
+    same_as: str = ""
     # fact/sweep cases: the keyword query an agent would add to the question, written
     # from the question's own words only (never from the known answer)
     keywords: str = ""
@@ -68,6 +70,16 @@ def load_cases(path: Path) -> list[Case]:
     for case in cases:
         if split_of.setdefault(case.group, case.split) != case.split:
             raise ValueError(f"Group {case.group} spans both splits.")
+    by_id = {case.id: case for case in cases}
+    for case in cases:
+        if not case.same_as:
+            continue
+        other = by_id.get(case.same_as)
+        if other is None or other.same_as or (other.kind, other.group) != (case.kind, case.group):
+            raise ValueError(
+                f"Case {case.id}: same_as must name a case of the same kind and group "
+                "that has no same_as itself."
+            )
     return cases
 
 

@@ -19,7 +19,8 @@
   "lang": "de",
   "group": "harris-feathers",
   "split": "test",
-  "keywords": "harris hawk feathers goshawk broken"
+  "keywords": "harris hawk feathers goshawk broken",
+  "same_as": "fact-en-01"
  },
  {
   "id": "fact-en-03",
@@ -41,7 +42,8 @@
   "lang": "de",
   "group": "harris-signals",
   "split": "dev",
-  "keywords": "harris hawk silent group hunt"
+  "keywords": "harris hawk silent group hunt",
+  "same_as": "fact-en-03"
  },
  {
   "id": "fact-en-05",
@@ -118,7 +120,8 @@
   "lang": "de",
   "group": "travel-box",
   "split": "test",
-  "keywords": "travel box bars"
+  "keywords": "travel box bars",
+  "same_as": "fact-en-10"
  },
  {
   "id": "fact-en-12",
@@ -338,7 +341,8 @@
   "lang": "de",
   "group": "ferruginous",
   "split": "test",
-  "keywords": "ferruginous hawk glove"
+  "keywords": "ferruginous hawk glove",
+  "same_as": "fact-en-30"
  },
  {
   "id": "fact-en-32",
@@ -382,7 +386,8 @@
   "lang": "de",
   "group": "hoods",
   "split": "dev",
-  "keywords": "hood training"
+  "keywords": "hood training",
+  "same_as": "fact-en-34"
  },
  {
   "id": "fact-en-36",
@@ -481,7 +486,8 @@
   "lang": "de",
   "group": "weight",
   "split": "test",
-  "keywords": "weight management"
+  "keywords": "weight management",
+  "same_as": "sweep-en-02"
  },
  {
   "id": "sweep-en-04",

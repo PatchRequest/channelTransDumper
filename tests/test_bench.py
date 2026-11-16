@@ -163,3 +163,46 @@ def test_pool_merge_and_evaluate(db, tmp_path):
     assert by_group["mention"]["mention_R@50"] == 1.0
     assert "| hybrid | fact | 1 |" in runner.format_table(rows)
     conn.close()
+
+
+def test_judging_round_packs_controls_and_merges_twins(db, tmp_path):
+    from channeltrans.bench import judging
+
+    snap = tmp_path / "snap.db"
+    snapshot.create_snapshot(db, snap)
+    conn = connect_read_only(snap)
+    cases = [
+        Case("hood", ["hooding falcon"], "fact", "en", "hood", "dev"),
+        Case("haube", ["Haube Falke"], "fact", "de", "hood", "dev", same_as="hood"),
+        Case("cold", ["cold weather"], "fact", "en", "cold", "dev"),
+    ]
+    rows = conn.execute("SELECT video_id, start_ms, end_ms FROM passages ORDER BY id").fetchall()
+    known = {"cold": [Judgment(rows[1][0], rows[1][1], rows[1][2], 2)]}
+    pool = runner.build_pool(conn, EMBEDDER, cases, known, ["fts_any", "semantic"], 5)
+    assert {item["case_id"] for item in pool} == {"hood", "haube", "cold"}
+
+    packed = judging.pack(conn, pool, cases, known, size=2, seed=1)
+    graded_cases = {c["case_id"] for package in packed.packages for c in package}
+    assert "haube" not in graded_cases  # judged together with "hood"
+    hood = next(c for p in packed.packages for c in p if c["case_id"] == "hood")
+    assert hood["queries"] == ["hooding falcon", "Haube Falke"]
+    assert any(c["expect"] == "2" and c["case_id"] == "cold" for c in packed.manifest["controls"])
+
+    # A judge who grades everything 1, except controls as expected
+    expected = {(c["package"], c["key"]): (2 if c["expect"] == "2" else 0) for c in packed.manifest["controls"]}
+    grades = [
+        {c["case_id"]: {x["key"]: expected.get((n, x["key"]), 1) for x in c["candidates"]} for c in package}
+        for n, package in enumerate(packed.packages)
+    ]
+    collected = judging.collect(packed.packages, grades, packed.manifest, pool, known)
+    assert collected.failed_controls == []
+    assert collected.agreement[0] == collected.agreement[1]
+    assert set(collected.grades) == {"hood", "haube", "cold"}
+    assert collected.grades["haube"].keys() == {c["key"] for i in pool if i["case_id"] == "haube" for c in i["candidates"]}
+    for key in collected.grades.get("cold", {}):  # the known answer is not imported again
+        assert runner.parse_span_key(key)[1] != rows[1][1] or runner.parse_span_key(key)[0] != rows[1][0]
+
+    grades[0][next(iter(grades[0]))].popitem()
+    with pytest.raises(ValueError):
+        judging.collect(packed.packages, grades, packed.manifest, pool, known)
+    conn.close()
