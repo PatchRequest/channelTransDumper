@@ -133,7 +133,8 @@ of three topic cases, hybrid ranks 51–200 still held an estimated 50–125 rel
 passages each that no variant had ranked in its top 50. Thorough research on a broad
 topic therefore means paging far, adding a keyword query, and using `find_mentions`
 for the names involved. Every run, and the ideas that were measured and dropped (a
-cross-encoder reranker, weighted keyword fusion), are in `benchmark/RESULTS.md`.
+cross-encoder reranker, weighted keyword fusion, chapter titles, video descriptions, a
+shorts filter), are in `benchmark/RESULTS.md`.
 
 ## MCP server for agents
 
