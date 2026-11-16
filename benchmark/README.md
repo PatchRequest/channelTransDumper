@@ -32,6 +32,11 @@ uv run channeltrans-bench import-judgments round/import.json
 uv run channeltrans-bench evaluate --db ~/.channeltrans/snapshots/NAME.db --split dev --record "note"
 ```
 
+A snapshot has the schema of the code that made it; after a schema change `evaluate`
+refuses it. Bring it up to date with `snapshot OLD.db NEW.db` (same data, current
+schema) and delete the old one. The results recorded so far refer to
+`2026-11-16-full-v6`; earlier snapshots of the same corpus were removed after upgrading.
+
 ## Judging rubric
 
 Grades are given by LLM judges (one model for all rounds, so rounds stay comparable)

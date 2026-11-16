@@ -71,6 +71,21 @@ Default path `~/.channeltrans/transcripts.db`, changeable with `--db` or `CHANNE
 changing `PASSAGE_TARGET_CHARS`) without querying YouTube again. Querying
 `passage_vectors` directly with SQL requires the sqlite-vec extension.
 
+### Files and disk space
+
+Everything lives under `~/.channeltrans/`:
+
+| Path | Content | Safe to delete? |
+| ---- | ------- | --------------- |
+| `transcripts.db` | the database (two channels with ~900 videos: about 125 MB) | no – it is the data |
+| `transcripts.db.lock` | lock file of `sync`/`reindex` | yes, when no run is active |
+| `models/` | embedding model cache (about 1.2 GB) | yes; downloaded again on next use |
+| `snapshots/` | frozen copies for the benchmark (see `benchmark/README.md`) | yes, except the one the recorded results refer to |
+
+A schema upgrade happens in place the first time `sync` or `reindex` opens the database,
+and older versions of channeltrans cannot read it afterwards; to keep a way back, copy
+the database first (`sqlite3 ~/.channeltrans/transcripts.db ".backup backup.db"`).
+
 ## Searching
 
 ```bash
