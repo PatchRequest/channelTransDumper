@@ -179,3 +179,33 @@ within the same snapshot.
 | reranked | sweep | 8 | 0.893 | 0.174 | 0.640 | 0.640 | 0.000 |  |  |
 | reranked | sweep/de | 4 | 0.823 | 0.171 | 0.606 | 0.606 | 0.000 |  |  |
 | reranked | sweep/en | 4 | 0.963 | 0.177 | 0.674 | 0.674 | 0.000 |  |  |
+
+## 2026-11-16 – suggest_spellings. mentions_spelled accepts the suggestions listed in the case's terms (perfect judge). Separately, a real LLM agent choosing from the suggestions of the distinctive word reached mention recall 0.99-1.00 in all 8 cases (goshawk 0.48->1.00, harris 0.79->0.99, caracara 0.71->1.00, peregrine 0.39->0.99, ferruginous 0.82->1.00, imprint 0.07->1.00), adding 238 passages outside the case term lists, mostly real variants missing from those lists
+
+- code: `310dcb0`
+- snapshot: `2026-11-16-full-v3.db` (10882 passages, created 2026-11-16T10:44:48+00:00)
+- split: dev
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `1537d6354413`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 |
+|---|---|---|---|---|---|---|---|---|---|
+| mentions | mention | 4 |  |  |  |  |  | 0.466 | 0.585 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.466 | 0.585 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.474 | 0.659 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.474 | 0.659 |
+
+## 2026-11-16 – suggest_spellings. mentions_spelled accepts the suggestions listed in the case's terms (perfect judge). Separately, a real LLM agent choosing from the suggestions of the distinctive word reached mention recall 0.99-1.00 in all 8 cases (goshawk 0.48->1.00, harris 0.79->0.99, caracara 0.71->1.00, peregrine 0.39->0.99, ferruginous 0.82->1.00, imprint 0.07->1.00), adding 238 passages outside the case term lists, mostly real variants missing from those lists
+
+- code: `310dcb0`
+- snapshot: `2026-11-16-full-v3.db` (10882 passages, created 2026-11-16T10:44:48+00:00)
+- split: test
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `1537d6354413`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 |
+|---|---|---|---|---|---|---|---|---|---|
+| mentions | mention | 4 |  |  |  |  |  | 0.197 | 0.384 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 |
