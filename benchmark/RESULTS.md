@@ -209,3 +209,48 @@ within the same snapshot.
 | mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 |
 | mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 |
 | mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 |
+
+## 2026-11-16 – mention_R@all: completeness without the 200-hit cap. Test mention cases query a qualified name ('peregrine falcon', 'imprinted birds') that find_mentions takes literally; with the distinctive word, as the MCP instructions now advise, a real agent reached 0.99-1.00 (see previous entry)
+
+- code: `d6dc80e` (uncommitted changes in src/)
+- snapshot: `2026-11-16-full-v3.db` (10882 passages, created 2026-11-16T10:44:48+00:00)
+- split: dev
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `1537d6354413`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 | mention_R@all |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hybrid | fact | 21 | 0.675 | 0.316 | 0.730 | 0.909 | 0.000 |  |  |  |
+| hybrid | fact/de | 7 | 0.579 | 0.274 | 0.615 | 0.901 | 0.000 |  |  |  |
+| hybrid | fact/en | 14 | 0.724 | 0.337 | 0.788 | 0.913 | 0.000 |  |  |  |
+| hybrid | mention | 4 |  |  |  |  |  | 0.447 | 0.657 | 0.891 |
+| hybrid | mention/en | 4 |  |  |  |  |  | 0.447 | 0.657 | 0.891 |
+| hybrid | sweep | 8 | 0.829 | 0.155 | 0.652 | 0.881 | 0.000 |  |  |  |
+| hybrid | sweep/en | 8 | 0.829 | 0.155 | 0.652 | 0.881 | 0.000 |  |  |  |
+| mentions | mention | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.745 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.745 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.474 | 0.659 | 0.952 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.474 | 0.659 | 0.952 |
+
+## 2026-11-16 – mention_R@all: completeness without the 200-hit cap. Test mention cases query a qualified name ('peregrine falcon', 'imprinted birds') that find_mentions takes literally; with the distinctive word, as the MCP instructions now advise, a real agent reached 0.99-1.00 (see previous entry)
+
+- code: `d6dc80e` (uncommitted changes in src/)
+- snapshot: `2026-11-16-full-v3.db` (10882 passages, created 2026-11-16T10:44:48+00:00)
+- split: test
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `1537d6354413`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 | mention_R@all |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hybrid | fact | 20 | 0.690 | 0.383 | 0.797 | 0.919 | 0.000 |  |  |  |
+| hybrid | fact/de | 8 | 0.571 | 0.401 | 0.756 | 0.875 | 0.000 |  |  |  |
+| hybrid | fact/en | 12 | 0.769 | 0.371 | 0.823 | 0.948 | 0.000 |  |  |  |
+| hybrid | mention | 4 |  |  |  |  |  | 0.215 | 0.525 | 0.842 |
+| hybrid | mention/en | 4 |  |  |  |  |  | 0.215 | 0.525 | 0.842 |
+| hybrid | sweep | 8 | 0.877 | 0.170 | 0.640 | 0.874 | 0.000 |  |  |  |
+| hybrid | sweep/de | 4 | 0.823 | 0.171 | 0.606 | 0.836 | 0.000 |  |  |  |
+| hybrid | sweep/en | 4 | 0.931 | 0.170 | 0.674 | 0.912 | 0.000 |  |  |  |
+| mentions | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |

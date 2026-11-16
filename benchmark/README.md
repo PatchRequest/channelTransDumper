@@ -57,4 +57,6 @@ ranking is still unjudged.
   can reach by paging.
 - `mention_R@50`, `mention_R@200`: share of all passages naming the term (found by
   regular expression over the whole snapshot) among the first 50 / 200 hits; measures
-  completeness.
+  completeness. `mention_R@all` counts everything the variant returns when asked for
+  all mentions (paged rankings stop at 1000 hits); it is the measure for exhaustive
+  tools such as `find_mentions`.

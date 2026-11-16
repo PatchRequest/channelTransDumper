@@ -133,16 +133,22 @@ def evaluate(
         for case in scored:
             if not applies(variant, case.kind):
                 continue
-            ranked = run_variant(conn, embedder, variant, case, DEPTH)
             if case.kind == "mention":
+                # Mentions may outnumber DEPTH; exhaustive variants are asked for all of
+                # them (paged rankings stop at search.MAX_DEPTH), reported as mention_R@all.
                 truth = mention_truth[case.id]
+                ranked = run_variant(conn, embedder, variant, case, max(DEPTH, len(truth)))
+                found = [p.passage_id for p in ranked]
                 values = {
-                    f"mention_R@{k}": len({p.passage_id for p in ranked[:k]} & truth) / len(truth)
-                    if truth
-                    else 0.0
-                    for k in (50, DEPTH)
+                    key: len(set(found[:k]) & truth) / len(truth) if truth else 0.0
+                    for key, k in (
+                        ("mention_R@50", 50),
+                        (f"mention_R@{DEPTH}", DEPTH),
+                        ("mention_R@all", len(found)),
+                    )
                 }
             else:
+                ranked = run_variant(conn, embedder, variant, case, DEPTH)
                 judged = judgments[case.id]
                 values = {
                     "nDCG@10": metrics.ndcg(ranked, judged, 10),
@@ -163,7 +169,8 @@ def evaluate(
 
 def format_table(rows: list[Row]) -> str:
     columns = [
-        "nDCG@10", "R@10", "R@50", f"R@{DEPTH}", "unjudged@10", "mention_R@50", f"mention_R@{DEPTH}",
+        "nDCG@10", "R@10", "R@50", f"R@{DEPTH}", "unjudged@10",
+        "mention_R@50", f"mention_R@{DEPTH}", "mention_R@all",
     ]
     lines = [
         "| variant | group | cases | " + " | ".join(columns) + " |",
