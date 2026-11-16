@@ -468,22 +468,26 @@ The agent's choices added 238 passages outside the cases' term lists: mostly rea
 variants missing from those lists ("paragrin", "fruginous"), some sound-alikes
 ("burnout", "banal" for barn owl). Precision is not measured.
 
-**Chapters**: only 21 of 909 videos have chapter timestamps in their description, so
-indexing them was not pursued; YouTube's automatic chapters would need re-fetching all
-videos and were not measured.
+**Chapters, descriptions, shorts** (`2026-11-16-full-v6`, unit metric, hybrid as
+recorded above = baseline):
 
-**Relevant passages beyond the judged pool** (`2026-11-16-full-v6`). Recall figures
-are shares of the *known* relevant passages, found by pooling to depth 30 (facts) /
-50 (sweeps). For three broad sweep cases, a random sample of 40 unjudged passages from
-hybrid ranks 51–200 was judged with the same rubric:
+| idea | split | fact nDCG@10 | fact R@200 | sweep nDCG@10 | sweep R@200 |
+|---|---|---|---|---|---|
+| baseline | dev | 0.685 | 0.917 | 0.820 | 0.890 |
+| baseline | test | 0.709 | 0.920 | 0.879 | 0.893 |
+| chapter title embedded with each passage | dev | 0.675 | 0.911 | 0.820 | 0.893 |
+| chapter title embedded with each passage | test | 0.692 | 0.923 | 0.884 | 0.883 |
+| video description as a ranking (videos by description similarity) | dev | 0.534 | 0.872 | 0.804 | 0.840 |
+| video description as a ranking | test | 0.472 | 0.888 | 0.850 | 0.866 |
+| shorts (≤ 60 s) removed | dev | 0.672 | 0.902 | 0.820 | 0.875 |
+| shorts (≤ 60 s) removed | test | 0.705 | 0.915 | 0.887 | 0.884 |
 
-| case | known relevant | relevant in sample | est. unjudged relevant in ranks 51–200 | known share ≤ |
-|---|---|---|---|---|
-| sweep-en-05 (hoods) | 75 | 14/40 | ~48 | 61 % |
-| sweep-en-08 (telemetry, lost birds) | 82 | 27/40 | ~83 | 50 % |
-| sweep-en-15 (passage birds) | 89 | 39/40 | ~125 | 42 % |
-
-So for broad topics, R@200 overstates completeness: there are far more relevant
-passages than judged, and an agent researching such a topic must page well beyond 200
-hits (and use find_mentions). These sample grades are not part of `judgments.json`,
-since they come from one variant's ranking only and would bias comparisons toward it.
+- Chapters: fetched from YouTube for all 909 videos; 537 have chapters (mostly automatic
+  ones), covering 9,152 passages, which were re-embedded as "video title – chapter
+  title" + text. 1 % of the resulting top 10 were unjudged (counted as not relevant).
+  No gain; not pursued.
+- Descriptions: a third ranking per query ordering the semantic candidates by their
+  video's description similarity. Clearly worse; descriptions are mostly links and
+  sponsor text.
+- Shorts: 224 of 909 videos, 229 passages. Removing them loses relevant passages and
+  does not lift the first hits; a filter by video type is therefore not offered.
