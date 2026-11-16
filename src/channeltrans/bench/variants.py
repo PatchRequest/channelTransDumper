@@ -66,14 +66,14 @@ def _mentions_spelled(
 
 def _semantic(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
     return search.fuse_rankings(
-        list(search.semantic_candidates(conn, embedder.embed_query(query), None, depth))
+        list(search.semantic_candidates(conn, embedder.embed_query(query), search.Scope(), depth))
         for query in case.queries
     )[:depth]
 
 
 def _fts_any(conn: sqlite3.Connection, embedder: Embedder, case: Case, depth: int) -> list[int]:
     return search.fuse_rankings(
-        search.text_candidates(conn, search.build_fts_query(query, "any"), None, depth)
+        search.text_candidates(conn, search.build_fts_query(query, "any"), search.Scope(), depth)
         for query in case.queries
     )[:depth]
 

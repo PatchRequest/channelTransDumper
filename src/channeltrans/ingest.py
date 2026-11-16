@@ -171,7 +171,7 @@ def index_missing(conn: sqlite3.Connection, embedder: Embedder) -> None:
 def embed_missing(conn: sqlite3.Connection, embedder: Embedder) -> int:
     """Compute the vectors of all passages that do not have one yet."""
     rows = conn.execute(
-        """SELECT p.id, p.text, v.title, v.channel_id
+        """SELECT p.id, p.text, v.title, v.channel_id, coalesce(v.upload_date, '') AS upload_date
            FROM passages p JOIN videos v ON v.id = p.video_id
            WHERE p.id NOT IN (SELECT passage_id FROM passage_vectors)
            ORDER BY p.id"""
@@ -183,8 +183,12 @@ def embed_missing(conn: sqlite3.Connection, embedder: Embedder) -> int:
         vectors = embedder.embed_documents([(row["title"], row["text"]) for row in batch])
         with conn:  # stored per batch so an interruption loses little work
             conn.executemany(
-                "INSERT INTO passage_vectors (passage_id, channel_id, embedding) VALUES (?, ?, ?)",
-                [(row["id"], row["channel_id"], vector) for row, vector in zip(batch, vectors)],
+                """INSERT INTO passage_vectors (passage_id, channel_id, upload_date, embedding)
+                   VALUES (?, ?, ?, ?)""",
+                [
+                    (row["id"], row["channel_id"], row["upload_date"], vector)
+                    for row, vector in zip(batch, vectors)
+                ],
             )
     return len(rows)
 

@@ -65,6 +65,8 @@ def build_server(db_path: Path) -> MCPServer:
     def search_transcripts(
         queries: list[str],
         channel: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
         match: Literal["all", "any"] = "all",
         limit: int = 10,
         offset: int = 0,
@@ -83,6 +85,8 @@ def build_server(db_path: Path) -> MCPServer:
             For the full-text part: words are stemmed (English), "…" searches an exact
             phrase, word* a prefix.
         channel: optionally restrict to one channel (ID, @handle or title).
+        since, until: optionally restrict to videos uploaded in this range (ISO dates,
+            inclusive, e.g. "2024-01-01").
         match: full-text part – "all" = every term must occur, "any" = one is enough.
         limit: number of hits per call (at most 50).
         offset: skip this many hits to read further pages of the same ranking
@@ -94,12 +98,18 @@ def build_server(db_path: Path) -> MCPServer:
         """
         with connection() as conn:
             return search.search_passages(
-                conn, embedder, queries, channel=channel, match=match, limit=limit, offset=offset
+                conn, embedder, queries, channel=channel, since=since, until=until,
+                match=match, limit=limit, offset=offset,
             )
 
     @server.tool()
     def find_mentions(
-        terms: list[str], channel: str | None = None, limit: int = 50, offset: int = 0
+        terms: list[str],
+        channel: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> dict[str, Any]:
         """Every passage that names one of the terms, grouped by video, most mentions first.
 
@@ -109,11 +119,14 @@ def build_server(db_path: Path) -> MCPServer:
         matches "hawks"). Transcripts misspell names, so add the transcription variants
         as extra terms (up to 20): get them from suggest_spellings, e.g.
         ["goshawk", "gosh hawk", "goss hawk", "gossock"].
+        channel, since, until (upload dates, ISO, inclusive) narrow the search.
         limit/offset page through the videos (at most 50 per call); total_passages and
         total_videos give the full counts.
         """
         with connection() as conn:
-            return search.find_mentions(conn, terms, channel=channel, limit=limit, offset=offset)
+            return search.find_mentions(
+                conn, terms, channel=channel, since=since, until=until, limit=limit, offset=offset
+            )
 
     @server.tool()
     def suggest_spellings(term: str, channel: str | None = None, limit: int = 20) -> dict[str, Any]:

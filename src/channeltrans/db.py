@@ -132,8 +132,31 @@ ALTER TABLE videos ADD COLUMN availability TEXT;
 UPDATE videos SET missing_checks = 1 WHERE status = 'no_transcript';
 """
 
+# Upload date as a filterable column of the vectors, so a date range is applied inside
+# the nearest-neighbour search rather than after it. vec0 tables can be neither altered
+# nor renamed, so the vectors are copied out and back. '' = unknown date (vec0 metadata
+# columns cannot hold NULL).
+_SCHEMA_V6 = f"""
+CREATE TABLE vectors_copy AS SELECT passage_id, channel_id, embedding FROM passage_vectors;
+DROP TRIGGER passages_vectors_delete;
+DROP TABLE passage_vectors;
+CREATE VIRTUAL TABLE passage_vectors USING vec0(
+    passage_id  INTEGER PRIMARY KEY,
+    channel_id  TEXT PARTITION KEY,
+    upload_date TEXT,
+    embedding   FLOAT[{DIMENSIONS}] distance_metric=cosine
+);
+INSERT INTO passage_vectors (passage_id, channel_id, upload_date, embedding)
+    SELECT c.passage_id, c.channel_id, coalesce(v.upload_date, ''), c.embedding
+    FROM vectors_copy c JOIN passages p ON p.id = c.passage_id JOIN videos v ON v.id = p.video_id;
+DROP TABLE vectors_copy;
+CREATE TRIGGER passages_vectors_delete AFTER DELETE ON passages BEGIN
+    DELETE FROM passage_vectors WHERE passage_id = old.id;
+END;
+"""
+
 # Schema steps in order; the schema version is the number of steps applied.
-_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3, _SCHEMA_V4, _SCHEMA_V5]
+_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3, _SCHEMA_V4, _SCHEMA_V5, _SCHEMA_V6]
 SCHEMA_VERSION = len(_SCHEMA_STEPS)
 
 

@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 import sqlite3
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from datetime import date
 from typing import Any, Literal
 
 from .embedding import Embedder
@@ -37,6 +39,48 @@ class QueryError(Exception):
     """The request is invalid (empty search, unknown channel, unknown ID)."""
 
 
+@dataclass(frozen=True)
+class Scope:
+    """Which passages a search covers: optionally one channel and an upload date range
+    (ISO dates, inclusive). Videos with unknown upload date fall outside any range."""
+
+    channel_id: str | None = None
+    since: str | None = None
+    until: str | None = None
+
+
+def resolve_scope(
+    conn: sqlite3.Connection,
+    channel: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+) -> Scope:
+    for name, value in (("since", since), ("until", until)):
+        if value is not None:
+            try:
+                date.fromisoformat(value)
+            except ValueError:
+                raise QueryError(f"{name} must be a date like 2024-03-31, not {value!r}.") from None
+    if since and until and since > until:
+        raise QueryError("since must not be after until.")
+    return Scope(None if channel is None else resolve_channel(conn, channel), since, until)
+
+
+def _scope_sql(scope: Scope, video: str = "v.") -> tuple[str, list[Any]]:
+    """SQL conditions (each starting with AND) restricting rows to the scope."""
+    sql, params = "", []
+    if scope.channel_id is not None:
+        sql += f" AND {video}channel_id = ?"
+        params.append(scope.channel_id)
+    if scope.since is not None:
+        sql += f" AND {video}upload_date >= ?"
+        params.append(scope.since)
+    if scope.until is not None:
+        sql += f" AND {video}upload_date > '' AND {video}upload_date <= ?"
+        params.append(scope.until)
+    return sql, params
+
+
 def build_fts_query(query: str, match: Match) -> str:
     """Translate a free-form search query into a safe FTS5 expression.
 
@@ -60,6 +104,8 @@ def search_passages(
     queries: Sequence[str],
     *,
     channel: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
     match: Match = "all",
     limit: int = 10,
     offset: int = 0,
@@ -71,6 +117,7 @@ def search_passages(
     Several ``queries`` (e.g. the same question phrased in different languages) are
     searched separately and fused, so a passage found by several of them ranks higher.
     ``match`` only affects the full-text part. ``offset`` pages through the ranking.
+    ``channel``, ``since`` and ``until`` (upload dates, inclusive) restrict the search.
 
     Passages repeating speech from a better-ranked hit of another video (see
     duplicates.py) are folded into that hit and listed under ``duplicates``, so each
@@ -82,15 +129,15 @@ def search_passages(
     limit = _clamp(limit)
     if offset < 0 or offset + limit > MAX_DEPTH:
         raise QueryError(f"offset + limit must be between 1 and {MAX_DEPTH}.")
-    channel_id = None if channel is None else resolve_channel(conn, channel)
+    scope = resolve_scope(conn, channel, since, until)
     candidates = MAX_DEPTH
 
     rankings: list[list[int]] = []
     text_matches: set[int] = set()
     similarities: dict[int, float] = {}
     for query in queries:
-        text_ids = text_candidates(conn, build_fts_query(query, match), channel_id, candidates)
-        semantic = semantic_candidates(conn, embedder.embed_query(query), channel_id, candidates)
+        text_ids = text_candidates(conn, build_fts_query(query, match), scope, candidates)
+        semantic = semantic_candidates(conn, embedder.embed_query(query), scope, candidates)
         rankings += [text_ids, list(semantic)]
         text_matches.update(text_ids)
         for passage_id, similarity in semantic.items():
@@ -182,32 +229,30 @@ def fuse_rankings(rankings: Iterable[Sequence[int]]) -> list[int]:
 
 
 def text_candidates(
-    conn: sqlite3.Connection, fts_query: str, channel_id: str | None, count: int
+    conn: sqlite3.Connection, fts_query: str, scope: Scope, count: int
 ) -> list[int]:
     """Passage IDs matching an FTS5 expression, best BM25 score first."""
-    sql = """SELECT p.id FROM passages_fts
-             JOIN passages p ON p.id = passages_fts.rowid
-             JOIN videos v ON v.id = p.video_id
-             WHERE passages_fts MATCH ?"""
-    params: list[Any] = [fts_query]
-    if channel_id is not None:
-        sql += " AND v.channel_id = ?"
-        params.append(channel_id)
-    sql += " ORDER BY bm25(passages_fts) LIMIT ?"
-    return [row[0] for row in conn.execute(sql, [*params, count])]
+    conditions, params = _scope_sql(scope)
+    sql = f"""SELECT p.id FROM passages_fts
+              JOIN passages p ON p.id = passages_fts.rowid
+              JOIN videos v ON v.id = p.video_id
+              WHERE passages_fts MATCH ?{conditions}
+              ORDER BY bm25(passages_fts) LIMIT ?"""
+    return [row[0] for row in conn.execute(sql, [fts_query, *params, count])]
 
 
 def semantic_candidates(
-    conn: sqlite3.Connection, query_vector: bytes, channel_id: str | None, count: int
+    conn: sqlite3.Connection, query_vector: bytes, scope: Scope, count: int
 ) -> dict[int, float]:
-    """Nearest neighbours of the query: passage ID → cosine similarity, best first."""
-    sql = "SELECT passage_id, distance FROM passage_vectors WHERE embedding MATCH ? AND k = ?"
-    params: list[Any] = [query_vector, count]
-    if channel_id is not None:
-        sql += " AND channel_id = ?"
-        params.append(channel_id)
-    sql += " ORDER BY distance"
-    return {row[0]: round(1.0 - row[1], 3) for row in conn.execute(sql, params)}
+    """Nearest neighbours of the query: passage ID → cosine similarity, best first.
+
+    The scope is applied inside the nearest-neighbour search (channel and upload date
+    are columns of passage_vectors), so a narrow scope still yields ``count`` hits.
+    """
+    conditions, params = _scope_sql(scope, video="")
+    sql = f"""SELECT passage_id, distance FROM passage_vectors
+              WHERE embedding MATCH ? AND k = ?{conditions} ORDER BY distance"""
+    return {row[0]: round(1.0 - row[1], 3) for row in conn.execute(sql, [query_vector, count, *params])}
 
 
 def find_mentions(
@@ -215,6 +260,8 @@ def find_mentions(
     terms: Sequence[str],
     *,
     channel: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> dict[str, Any]:
@@ -233,10 +280,9 @@ def find_mentions(
                      v.title AS video_title, v.upload_date, c.title AS channel
               FROM passages_fts JOIN passages p ON p.id = passages_fts.rowid {_PASSAGE_JOINS}
               WHERE passages_fts MATCH ?"""
-    params: list[Any] = [fts_query]
-    if channel is not None:
-        sql += " AND v.channel_id = ?"
-        params.append(resolve_channel(conn, channel))
+    conditions, params = _scope_sql(resolve_scope(conn, channel, since, until))
+    sql += conditions
+    params = [fts_query, *params]
     videos: dict[str, dict[str, Any]] = {}
     for row in conn.execute(sql + " ORDER BY p.video_id, p.start_ms", params):
         video = videos.setdefault(

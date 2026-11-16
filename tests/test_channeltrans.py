@@ -374,3 +374,59 @@ def test_writer_lock_rejects_a_second_writer(tmp_path):
         holder.wait()
     with writer_lock(db):  # released when the holder died
         pass
+
+
+def test_date_range_narrows_search_and_mentions(conn):
+    dated = {
+        "old": dataclasses.replace(_video("old", "Weigh the hawk every morning."), upload_date="2019-05-01"),
+        "new": dataclasses.replace(_video("new", "Weigh the hawk before flying."), upload_date="2025-05-01"),
+        "undated": dataclasses.replace(_video("undated", "Weigh the hawk daily."), upload_date=None),
+    }
+    client = FakeClient(dated)
+    channel_id = ingest.discover(conn, client, "u")
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
+
+    def videos(**scope):
+        return {h["video_id"] for h in search.search_passages(conn, EMBEDDER, ["weigh hawk"], **scope)}
+
+    assert videos() == {"old", "new", "undated"}
+    assert videos(since="2020-01-01") == {"new"}
+    assert videos(until="2020-01-01") == {"old"}  # unknown dates fall outside any range
+    assert videos(since="2019-05-01", until="2019-05-01") == {"old"}
+    mentions = search.find_mentions(conn, ["hawk"], since="2025-01-01")
+    assert [v["video_id"] for v in mentions["videos"]] == ["new"]
+    for bad in ({"since": "May 2020"}, {"since": "2025-01-01", "until": "2024-01-01"}):
+        with pytest.raises(search.QueryError):
+            videos(**bad)
+
+
+def test_upgrade_moves_vectors_into_the_dated_table(tmp_path):
+    import sqlite3
+
+    import sqlite_vec
+
+    from channeltrans import db as schema
+
+    path = tmp_path / "old.sqlite"
+    old = sqlite3.connect(path)
+    old.enable_load_extension(True)
+    sqlite_vec.load(old)
+    for step, script in enumerate(schema._SCHEMA_STEPS[:5]):
+        old.executescript(f"BEGIN;{script}PRAGMA user_version = {step + 1};COMMIT;")
+    old.executescript(
+        """INSERT INTO channels (id, title, url, added_at, last_discovered_at) VALUES ('c', 'C', 'u', 'now', 'now');
+           INSERT INTO videos (id, channel_id, title, listing_rank, upload_date, status)
+               VALUES ('v', 'c', 'T', 0, '2024-02-03', 'done');
+           INSERT INTO passages (video_id, seq, start_ms, end_ms, text) VALUES ('v', 0, 0, 1, 'x');"""
+    )
+    vector = EMBEDDER.embed_documents([("T", "x")])[0]
+    old.execute("INSERT INTO passage_vectors (passage_id, channel_id, embedding) VALUES (1, 'c', ?)", (vector,))
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == schema.SCHEMA_VERSION
+    row = conn.execute("SELECT passage_id, upload_date, embedding FROM passage_vectors").fetchone()
+    assert (row[0], row[1], row[2]) == (1, "2024-02-03", vector)
+    conn.execute("DELETE FROM passages")  # the delete trigger is back
+    assert conn.execute("SELECT count(*) FROM passage_vectors").fetchone()[0] == 0

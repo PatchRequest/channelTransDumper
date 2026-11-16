@@ -63,6 +63,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     find.add_argument("--channel", help="channel ID, @handle or title")
     find.add_argument("--any", action="store_true", help="one search term is enough (not all)")
+    find.add_argument("--since", help="only videos uploaded on or after this date (YYYY-MM-DD)")
+    find.add_argument("--until", help="only videos uploaded on or before this date (YYYY-MM-DD)")
     find.add_argument("--limit", type=int, default=10)
     find.add_argument("--offset", type=int, default=0, help="skip this many hits (paging)")
 
@@ -71,6 +73,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     mentions.add_argument("terms", nargs="+", metavar="term")
     mentions.add_argument("--channel", help="channel ID, @handle or title")
+    mentions.add_argument("--since", help="only videos uploaded on or after this date")
+    mentions.add_argument("--until", help="only videos uploaded on or before this date")
     mentions.add_argument("--limit", type=int, default=50, help="videos per page")
     mentions.add_argument("--offset", type=int, default=0, help="skip this many videos")
 
@@ -118,13 +122,21 @@ def _run(args: argparse.Namespace) -> int:
                 LocalEmbedder(),
                 args.queries,
                 channel=args.channel,
+                since=args.since,
+                until=args.until,
                 match="any" if args.any else "all",
                 limit=args.limit,
                 offset=args.offset,
             )
         elif args.command == "mentions":
             output = search.find_mentions(
-                conn, args.terms, channel=args.channel, limit=args.limit, offset=args.offset
+                conn,
+                args.terms,
+                channel=args.channel,
+                since=args.since,
+                until=args.until,
+                limit=args.limit,
+                offset=args.offset,
             )
         elif args.command == "spellings":
             output = spelling.suggest_spellings(

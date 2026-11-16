@@ -99,7 +99,8 @@ Output is JSON. For each hit, `text_match` tells whether the terms occur literal
 `semantic_similarity` (0–1) how close it is in meaning. A passage that repeats speech
 from a better hit of another video (compilations, re-uploaded clips: at least half of
 its word 5-grams recur) is folded into that hit and listed under `duplicates`, so a
-page shows distinct statements. `--offset` pages through the same ranking. For research that must not miss anything on a topic, add a short keyword
+page shows distinct statements. `--offset` pages through the same ranking;
+`--since`/`--until` (upload dates, `YYYY-MM-DD`, inclusive) restrict it to a period. For research that must not miss anything on a topic, add a short keyword
 query next to the question and keep paging: in the benchmark this raised the share of
 relevant passages within 200 hits from 0.88 to 0.96, at a small cost to the first ten.
 
