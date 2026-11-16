@@ -9,9 +9,13 @@ ranks first, but how much of everything relevant an agent gets to see.
   said on a topic) or `mention` (all passages naming a term, incl. transcription errors
   listed in `terms`). `split` separates `dev` cases, used for tuning, from `test` cases,
   used for reporting.
+  `same_as` links a case to one asking the same question in another language (judged
+  together); `keywords` is the keyword query an agent would add, written from the
+  question's words only.
 - `judgments.json`: graded time spans per case (0 = not relevant, 1 = touches the topic,
   2 = answers it). Spans instead of passage IDs keep judgments valid across rebuilds.
 - `RESULTS.md`: one entry per recorded run.
+- `judge-prompt.md`: the instructions every judge gets (see the rubric below).
 
 ## Workflow
 
@@ -21,8 +25,10 @@ changes rankings without any code change.
 ```bash
 uv run channeltrans-bench snapshot ~/.channeltrans/transcripts.db ~/.channeltrans/snapshots/NAME.db
 uv run channeltrans-bench pool --db ~/.channeltrans/snapshots/NAME.db --out pool.json
-# grade pool.json → grades.json: {"case-id": {"video|start_ms|end_ms": 0|1|2, ...}, ...}
-uv run channeltrans-bench import-judgments grades.json
+uv run channeltrans-bench judge-pack --db ~/.channeltrans/snapshots/NAME.db --pool pool.json --out round/
+# one judge per round/prompt-NN.md; each writes round/grades-NN.json
+uv run channeltrans-bench judge-collect round/
+uv run channeltrans-bench import-judgments round/import.json
 uv run channeltrans-bench evaluate --db ~/.channeltrans/snapshots/NAME.db --split dev --record "note"
 ```
 
