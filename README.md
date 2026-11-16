@@ -112,6 +112,22 @@ and an example; many are sound-alikes of other words, so pick the real ones and 
 them to `mentions`. In the benchmark, an agent doing so found 99–100 % of the mentions
 of eight bird names and terms, against 7–99 % with the plain term.
 
+## Search quality
+
+Measured with the benchmark in `benchmark/` (65 cases on two falconry channels, 4,100
+relevance-judged passages; held-out test split, repeated speech counted once):
+
+| | first 10 hits (nDCG@10) | relevant passages within 50 / 200 hits |
+|---|---|---|
+| Specific questions | 0.71 | 81 % / 92 % |
+| "Everything on a topic" | 0.88 | 65 % / 89 % |
+| … plus a keyword query | 0.90 | 77 % / 99 % |
+
+For named things (species, people, equipment), `find_mentions` with the spellings an
+agent picked from `suggest_spellings` found 99–100 % of all mentions in each of eight
+test terms. See `benchmark/RESULTS.md` for every run, including ideas that were
+measured and dropped (a cross-encoder reranker, weighted keyword fusion).
+
 ## MCP server for agents
 
 ```bash

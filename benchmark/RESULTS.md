@@ -325,3 +325,89 @@ within the same snapshot.
 | mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
 | mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
 | mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
+
+## 2026-11-16 – Final measurement of this round (schema 6): spelling suggestions, duplicate folding, date filter (no effect without a range). semantic = ranking before folding
+
+- code: `94b2937`
+- snapshot: `2026-11-16-full-v6.db` (10882 passages, created 2026-11-16T11:10:58+00:00)
+- split: dev
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `299a49f421cc`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 | mention_R@all |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hybrid | fact | 21 | 0.685 | 0.333 | 0.743 | 0.917 | 0.000 |  |  |  |
+| hybrid | fact/de | 7 | 0.595 | 0.281 | 0.617 | 0.920 | 0.000 |  |  |  |
+| hybrid | fact/en | 14 | 0.730 | 0.359 | 0.805 | 0.915 | 0.000 |  |  |  |
+| hybrid | mention | 4 |  |  |  |  |  | 0.447 | 0.647 | 0.861 |
+| hybrid | mention/en | 4 |  |  |  |  |  | 0.447 | 0.647 | 0.861 |
+| hybrid | sweep | 8 | 0.820 | 0.167 | 0.671 | 0.890 | 0.000 |  |  |  |
+| hybrid | sweep/en | 8 | 0.820 | 0.167 | 0.671 | 0.890 | 0.000 |  |  |  |
+| semantic | fact | 21 | 0.674 | 0.328 | 0.731 | 0.907 | 0.000 |  |  |  |
+| semantic | fact/de | 7 | 0.589 | 0.281 | 0.617 | 0.904 | 0.000 |  |  |  |
+| semantic | fact/en | 14 | 0.717 | 0.352 | 0.788 | 0.908 | 0.000 |  |  |  |
+| semantic | mention | 4 |  |  |  |  |  | 0.266 | 0.553 | 0.695 |
+| semantic | mention/en | 4 |  |  |  |  |  | 0.266 | 0.553 | 0.695 |
+| semantic | sweep | 8 | 0.773 | 0.156 | 0.641 | 0.879 | 0.000 |  |  |  |
+| semantic | sweep/en | 8 | 0.773 | 0.156 | 0.641 | 0.879 | 0.000 |  |  |  |
+| hybrid_kw | fact | 21 | 0.638 | 0.344 | 0.807 | 0.935 | 0.000 |  |  |  |
+| hybrid_kw | fact/de | 7 | 0.664 | 0.377 | 0.822 | 0.992 | 0.000 |  |  |  |
+| hybrid_kw | fact/en | 14 | 0.624 | 0.327 | 0.799 | 0.907 | 0.000 |  |  |  |
+| hybrid_kw | sweep | 8 | 0.747 | 0.155 | 0.644 | 0.968 | 0.000 |  |  |  |
+| hybrid_kw | sweep/en | 8 | 0.747 | 0.155 | 0.644 | 0.968 | 0.000 |  |  |  |
+| fts_any | fact | 21 | 0.314 | 0.206 | 0.430 | 0.585 | 0.000 |  |  |  |
+| fts_any | fact/de | 7 | 0.010 | 0.012 | 0.083 | 0.172 | 0.000 |  |  |  |
+| fts_any | fact/en | 14 | 0.466 | 0.303 | 0.604 | 0.791 | 0.000 |  |  |  |
+| fts_any | mention | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.790 |
+| fts_any | mention/en | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.790 |
+| fts_any | sweep | 8 | 0.543 | 0.130 | 0.442 | 0.641 | 0.000 |  |  |  |
+| fts_any | sweep/en | 8 | 0.543 | 0.130 | 0.442 | 0.641 | 0.000 |  |  |  |
+| mentions | mention | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.745 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.466 | 0.585 | 0.745 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.474 | 0.659 | 0.952 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.474 | 0.659 | 0.952 |
+
+## 2026-11-16 – Final measurement of this round (schema 6): spelling suggestions, duplicate folding, date filter (no effect without a range). semantic = ranking before folding
+
+- code: `94b2937`
+- snapshot: `2026-11-16-full-v6.db` (10882 passages, created 2026-11-16T11:10:58+00:00)
+- split: test
+- cases: `benchmark/cases.json`, judgments: `benchmark/judgments.json` (fingerprint `299a49f421cc`)
+- All cases judged.
+
+| variant | group | cases | nDCG@10 | R@10 | R@50 | R@200 | unjudged@10 | mention_R@50 | mention_R@200 | mention_R@all |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hybrid | fact | 20 | 0.709 | 0.431 | 0.806 | 0.920 | 0.000 |  |  |  |
+| hybrid | fact/de | 8 | 0.575 | 0.440 | 0.770 | 0.877 | 0.000 |  |  |  |
+| hybrid | fact/en | 12 | 0.799 | 0.424 | 0.830 | 0.948 | 0.000 |  |  |  |
+| hybrid | mention | 4 |  |  |  |  |  | 0.212 | 0.497 | 0.805 |
+| hybrid | mention/en | 4 |  |  |  |  |  | 0.212 | 0.497 | 0.805 |
+| hybrid | sweep | 8 | 0.879 | 0.193 | 0.649 | 0.893 | 0.000 |  |  |  |
+| hybrid | sweep/de | 4 | 0.822 | 0.180 | 0.623 | 0.863 | 0.000 |  |  |  |
+| hybrid | sweep/en | 4 | 0.936 | 0.206 | 0.675 | 0.923 | 0.000 |  |  |  |
+| semantic | fact | 20 | 0.677 | 0.398 | 0.793 | 0.920 | 0.000 |  |  |  |
+| semantic | fact/de | 8 | 0.544 | 0.395 | 0.766 | 0.880 | 0.000 |  |  |  |
+| semantic | fact/en | 12 | 0.765 | 0.399 | 0.812 | 0.947 | 0.000 |  |  |  |
+| semantic | mention | 4 |  |  |  |  |  | 0.190 | 0.412 | 0.610 |
+| semantic | mention/en | 4 |  |  |  |  |  | 0.190 | 0.412 | 0.610 |
+| semantic | sweep | 8 | 0.846 | 0.181 | 0.642 | 0.885 | 0.000 |  |  |  |
+| semantic | sweep/de | 4 | 0.803 | 0.176 | 0.623 | 0.850 | 0.000 |  |  |  |
+| semantic | sweep/en | 4 | 0.889 | 0.187 | 0.662 | 0.919 | 0.000 |  |  |  |
+| hybrid_kw | fact | 20 | 0.748 | 0.468 | 0.898 | 0.958 | 0.000 |  |  |  |
+| hybrid_kw | fact/de | 8 | 0.773 | 0.529 | 0.946 | 0.956 | 0.000 |  |  |  |
+| hybrid_kw | fact/en | 12 | 0.732 | 0.427 | 0.866 | 0.959 | 0.000 |  |  |  |
+| hybrid_kw | sweep | 8 | 0.898 | 0.207 | 0.768 | 0.988 | 0.000 |  |  |  |
+| hybrid_kw | sweep/de | 4 | 0.920 | 0.208 | 0.795 | 0.996 | 0.000 |  |  |  |
+| hybrid_kw | sweep/en | 4 | 0.876 | 0.206 | 0.742 | 0.980 | 0.000 |  |  |  |
+| fts_any | fact | 20 | 0.319 | 0.172 | 0.447 | 0.539 | 0.000 |  |  |  |
+| fts_any | fact/de | 8 | 0.007 | 0.031 | 0.031 | 0.049 | 0.000 |  |  |  |
+| fts_any | fact/en | 12 | 0.528 | 0.267 | 0.725 | 0.866 | 0.000 |  |  |  |
+| fts_any | mention | 4 |  |  |  |  |  | 0.215 | 0.527 | 0.964 |
+| fts_any | mention/en | 4 |  |  |  |  |  | 0.215 | 0.527 | 0.964 |
+| fts_any | sweep | 8 | 0.384 | 0.097 | 0.399 | 0.554 | 0.000 |  |  |  |
+| fts_any | sweep/de | 4 | 0.195 | 0.034 | 0.172 | 0.232 | 0.000 |  |  |  |
+| fts_any | sweep/en | 4 | 0.574 | 0.161 | 0.627 | 0.875 | 0.000 |  |  |  |
+| mentions | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
+| mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
+| mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
+| mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
