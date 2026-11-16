@@ -37,8 +37,8 @@ def build_server(db_path: Path) -> MCPServer:
             "queries in one call. Most transcripts are auto-generated: proper names and "
             "technical terms may be misspelled. For exhaustive research on a topic, add a "
             "short keyword query (e.g. \"goshawk molt weight\") next to the question and "
-            "keep paging: that reaches clearly more of the relevant passages, at a small "
-            "cost to the first hits."
+            "keep paging: within 200 hits that reaches clearly more of the relevant "
+            "passages."
         ),
     )
     embedder = LocalEmbedder()

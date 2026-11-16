@@ -55,15 +55,20 @@ def resolve_scope(
     since: str | None = None,
     until: str | None = None,
 ) -> Scope:
-    for name, value in (("since", since), ("until", until)):
-        if value is not None:
-            try:
-                date.fromisoformat(value)
-            except ValueError:
-                raise QueryError(f"{name} must be a date like 2024-03-31, not {value!r}.") from None
+    since, until = _iso_date("since", since), _iso_date("until", until)
     if since and until and since > until:
         raise QueryError("since must not be after until.")
     return Scope(None if channel is None else resolve_channel(conn, channel), since, until)
+
+
+def _iso_date(name: str, value: str | None) -> str | None:
+    """The date in the stored form (YYYY-MM-DD); upload dates are compared as text."""
+    if value is None:
+        return None
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        raise QueryError(f"{name} must be a date like 2024-03-31, not {value!r}.") from None
 
 
 def _scope_sql(scope: Scope, video: str = "v.") -> tuple[str, list[Any]]:

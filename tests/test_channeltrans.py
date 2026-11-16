@@ -393,6 +393,7 @@ def test_date_range_narrows_search_and_mentions(conn):
     assert videos(since="2020-01-01") == {"new"}
     assert videos(until="2020-01-01") == {"old"}  # unknown dates fall outside any range
     assert videos(since="2019-05-01", until="2019-05-01") == {"old"}
+    assert videos(since="20200101") == {"new"}  # compact ISO form is normalised
     mentions = search.find_mentions(conn, ["hawk"], since="2025-01-01")
     assert [v["video_id"] for v in mentions["videos"]] == ["new"]
     for bad in ({"since": "May 2020"}, {"since": "2025-01-01", "until": "2024-01-01"}):

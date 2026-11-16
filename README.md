@@ -102,31 +102,38 @@ its word 5-grams recur) is folded into that hit and listed under `duplicates`, s
 page shows distinct statements. `--offset` pages through the same ranking;
 `--since`/`--until` (upload dates, `YYYY-MM-DD`, inclusive) restrict it to a period. For research that must not miss anything on a topic, add a short keyword
 query next to the question and keep paging: in the benchmark this raised the share of
-relevant passages within 200 hits from 0.88 to 0.96, at a small cost to the first ten.
+known relevant passages within 200 hits from 0.89 to 0.97–0.99 (its effect on the first
+ten hits was inconsistent between the two case splits).
 
 **Everything about a named thing.** `mentions` returns every passage naming one of the
 terms, grouped by video – exhaustive, not ranked. Automatic captions misspell names
 ("goshawk" also appears as "gosh hawk", "goss hawk", "gossock"), so `spellings` lists
 the variants that occur in the transcripts, each with the number of passages it adds
 and an example; many are sound-alikes of other words, so pick the real ones and pass
-them to `mentions`. In the benchmark, an agent doing so found 99–100 % of the mentions
-of eight bird names and terms, against 7–99 % with the plain term.
+them to `mentions`. In the benchmark, an agent doing so raised the share of mentions
+found for "goshawk" from 48 to 100 %, "caracara" from 71 to 100 % and "ferruginous"
+from 89 to 100 %; for names with few misspellings it changes little. Its precision is
+not measured: the agent also accepted a few sound-alikes ("burnout" for barn owl).
 
 ## Search quality
 
-Measured with the benchmark in `benchmark/` (65 cases on two falconry channels, 4,100
-relevance-judged passages; held-out test split, repeated speech counted once):
+Measured with the benchmark in `benchmark/` (65 cases on two falconry channels, about
+4,100 relevance-judged passages; held-out test split, repeated speech counted once).
+Relevance was judged for the passages any tested search variant ranked in its top 30
+(questions) or top 50 (topics), so the shares below are of the *known* relevant
+passages:
 
-| | first 10 hits (nDCG@10) | relevant passages within 50 / 200 hits |
+| | first 10 hits (nDCG@10) | known relevant passages within 50 / 200 hits |
 |---|---|---|
 | Specific questions | 0.71 | 81 % / 92 % |
 | "Everything on a topic" | 0.88 | 65 % / 89 % |
-| … plus a keyword query | 0.90 | 77 % / 99 % |
 
-For named things (species, people, equipment), `find_mentions` with the spellings an
-agent picked from `suggest_spellings` found 99–100 % of all mentions in each of eight
-test terms. See `benchmark/RESULTS.md` for every run, including ideas that were
-measured and dropped (a cross-encoder reranker, weighted keyword fusion).
+For broad topics there are many more relevant passages than were judged: in a sample
+of three topic cases, hybrid ranks 51–200 still held an estimated 50–125 relevant
+passages each that no variant had ranked in its top 50. Thorough research on a broad
+topic therefore means paging far, adding a keyword query, and using `find_mentions`
+for the names involved. Every run, and the ideas that were measured and dropped (a
+cross-encoder reranker, weighted keyword fusion), are in `benchmark/RESULTS.md`.
 
 ## MCP server for agents
 

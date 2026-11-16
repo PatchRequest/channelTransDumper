@@ -411,3 +411,79 @@ within the same snapshot.
 | mentions | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.569 |
 | mentions_spelled | mention | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
 | mentions_spelled | mention/en | 4 |  |  |  |  |  | 0.197 | 0.384 | 0.572 |
+
+## 2026-11-16 – Notes: experiments measured outside `evaluate`
+
+These ran as one-off scripts on the snapshots named below; the numbers are recorded here
+so that dropped ideas stay documented.
+
+**Weighted keyword fusion** (dev, `2026-11-16-full-v3`, span metric). Adding an any-term
+full-text list to the semantic ranking at weight w, or the case's keyword query:
+
+| configuration | fact nDCG@10 | fact R@200 | sweep nDCG@10 | sweep R@200 |
+|---|---|---|---|---|
+| semantic only (= hybrid for questions) | 0.675 | 0.909 | 0.840 | 0.880 |
+| + any-term text, w = 0.25 | 0.650 | 0.935 | 0.808 | 0.925 |
+| + any-term text, w = 0.5 | 0.633 | 0.970 | 0.763 | 0.962 |
+| + any-term text, w = 1 | 0.533 | 0.967 | 0.705 | 0.964 |
+| + keyword query (semantic and text, w = 0.5) | 0.646 | 0.938 | 0.791 | 0.957 |
+
+Every mix trades the first ten hits for depth on dev; dropped. The keyword query is
+left to the agent (MCP instructions), since it raises R@200 on both splits.
+
+**Duplicate folding** (dev, `2026-11-16-full-v3`). Fold threshold = share of shared word
+5-grams; the metric counted repeated speech as one unit at the unit threshold given.
+
+| unit threshold | folding | fact nDCG@10 | fact R@50 | sweep nDCG@10 | sweep R@50 |
+|---|---|---|---|---|---|
+| (spans counted separately) | none | 0.675 | 0.730 | 0.829 | 0.652 |
+| (spans counted separately) | 0.5 | 0.656 | 0.751 | 0.820 | 0.682 |
+| 0.5 | none | 0.674 | 0.731 | 0.768 | 0.641 |
+| 0.5 | 0.5 | 0.685 | 0.743 | 0.820 | 0.671 |
+| 0.8 | none | 0.672 | 0.727 | 0.803 | 0.650 |
+| 0.8 | 0.5 | 0.670 | 0.746 | 0.820 | 0.680 |
+| 0.8 | 0.8 | 0.675 | 0.728 | 0.826 | 0.655 |
+
+The gain depends on counting repeated speech once, which the benchmark adopted together
+with folding at the same 0.5 threshold; under the stricter 0.8 units, fact nDCG@10 is
+unchanged and recall still rises. Per case on `2026-11-16-full-v6` (unit metric),
+folding never made a case worse: nDCG@10 better/same/worse = 5/16/0 (dev facts),
+3/5/0 (dev sweeps), 9/11/0 (test facts), 3/5/0 (test sweeps).
+
+**Spelling suggestions, effect separated from word choice** (`2026-11-16-full-v6`,
+share of mentions found by `find_mentions`):
+
+| case | as asked | distinctive word | + spellings an agent chose |
+|---|---|---|---|
+| goshawk | 0.48 | 0.48 | 1.00 |
+| Harris hawk | 0.79 | 0.98 | 0.99 |
+| caracara | 0.71 | 0.71 | 1.00 |
+| peregrine falcon | 0.39 | 0.98 | 0.99 |
+| kestrel | 0.99 | 0.99 | 1.00 |
+| ferruginous hawk | 0.82 | 0.89 | 1.00 |
+| barn owl | 1.00 | 1.00 | 1.00 |
+| imprinted birds | 0.07 | 1.00 | 1.00 |
+
+The agent's choices added 238 passages outside the cases' term lists: mostly real
+variants missing from those lists ("paragrin", "fruginous"), some sound-alikes
+("burnout", "banal" for barn owl). Precision is not measured.
+
+**Chapters**: only 21 of 909 videos have chapter timestamps in their description, so
+indexing them was not pursued; YouTube's automatic chapters would need re-fetching all
+videos and were not measured.
+
+**Relevant passages beyond the judged pool** (`2026-11-16-full-v6`). Recall figures
+are shares of the *known* relevant passages, found by pooling to depth 30 (facts) /
+50 (sweeps). For three broad sweep cases, a random sample of 40 unjudged passages from
+hybrid ranks 51–200 was judged with the same rubric:
+
+| case | known relevant | relevant in sample | est. unjudged relevant in ranks 51–200 | known share ≤ |
+|---|---|---|---|---|
+| sweep-en-05 (hoods) | 75 | 14/40 | ~48 | 61 % |
+| sweep-en-08 (telemetry, lost birds) | 82 | 27/40 | ~83 | 50 % |
+| sweep-en-15 (passage birds) | 89 | 39/40 | ~125 | 42 % |
+
+So for broad topics, R@200 overstates completeness: there are far more relevant
+passages than judged, and an agent researching such a topic must page well beyond 200
+hits (and use find_mentions). These sample grades are not part of `judgments.json`,
+since they come from one variant's ranking only and would bias comparisons toward it.
