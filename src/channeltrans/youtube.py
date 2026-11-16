@@ -71,6 +71,8 @@ class FetchedVideo:
     duration_s: int | None
     description: str | None
     transcript: Transcript | None  # None: no subtitles in the original language
+    # YouTube's availability, e.g. "public", "unlisted", "subscriber_only" (members only)
+    availability: str | None = None
 
 
 def select_track(info: dict[str, Any]) -> Track | None:
@@ -161,6 +163,7 @@ class YouTubeClient:
             duration_s=int(info["duration"]) if info.get("duration") else None,
             description=info.get("description"),
             transcript=transcript,
+            availability=info.get("availability"),
         )
 
     def _download_track(self, info: dict[str, Any], track: Track) -> bytes:

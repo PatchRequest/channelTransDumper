@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import sqlite_vec
@@ -120,13 +123,52 @@ CREATE TRIGGER passages_duplicates_delete AFTER DELETE ON passages BEGIN
 END;
 """
 
+# YouTube sometimes answers without captions although a video has them, so a missing
+# transcript is checked again in later runs (missing_checks counts the checks so far).
+# availability: as YouTube reports it; members-only videos are not checked again.
+_SCHEMA_V5 = """
+ALTER TABLE videos ADD COLUMN missing_checks INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE videos ADD COLUMN availability TEXT;
+UPDATE videos SET missing_checks = 1 WHERE status = 'no_transcript';
+"""
+
 # Schema steps in order; the schema version is the number of steps applied.
-_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3, _SCHEMA_V4]
+_SCHEMA_STEPS = [_SCHEMA_V1, _SCHEMA_V2, _SCHEMA_V3, _SCHEMA_V4, _SCHEMA_V5]
 SCHEMA_VERSION = len(_SCHEMA_STEPS)
 
 
 class DatabaseError(Exception):
     """The database is missing or does not match this version of the program."""
+
+
+@contextmanager
+def writer_lock(path: Path) -> Iterator[None]:
+    """Hold the database's writer lock (sync, reindex), or fail if another run holds it.
+
+    Two syncs on one database would fetch the same videos twice and interleave their
+    writes. The lock is an OS file lock on ``<db>.lock``, released when the process
+    ends, even if it crashes, so it never goes stale. Readers (search, MCP) need none.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path.with_name(path.name + ".lock"), "a+b") as lock:
+        try:
+            _lock_file(lock.fileno())
+        except OSError:
+            raise DatabaseError(
+                f"Another sync or reindex is running on {path}; wait for it to finish."
+            ) from None
+        yield
+
+
+def _lock_file(fd: int) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
 
 def connect(path: Path) -> sqlite3.Connection:

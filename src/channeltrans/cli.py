@@ -11,7 +11,7 @@ from contextlib import closing
 from pathlib import Path
 
 from . import ingest, search, spelling
-from .db import DatabaseError, connect, connect_read_only
+from .db import DatabaseError, connect, connect_read_only, writer_lock
 from .embedding import LocalEmbedder
 from .youtube import FetchError, FetchSettings, YouTubeClient
 
@@ -107,7 +107,7 @@ def _run(args: argparse.Namespace) -> int:
         build_server(args.db).run()
         return 0
     if args.command == "reindex":
-        with closing(connect(args.db)) as conn:
+        with writer_lock(args.db), closing(connect(args.db)) as conn:
             print(f"Rebuilt the passages of {ingest.reindex(conn, LocalEmbedder())} transcripts.")
         return 0
 
@@ -140,7 +140,7 @@ def _sync(args: argparse.Namespace) -> int:
     if args.proxy_insecure_tls and not args.proxy:
         sys.exit("Error: --proxy-insecure-tls is only allowed together with --proxy.")
     client = YouTubeClient(FetchSettings(args.proxy, args.proxy_insecure_tls))
-    with closing(connect(args.db)) as conn:
+    with writer_lock(args.db), closing(connect(args.db)) as conn:
         channel_id = ingest.discover(conn, client, args.channel_url)
         if args.recheck_missing:
             ingest.requeue_missing(conn, channel_id)

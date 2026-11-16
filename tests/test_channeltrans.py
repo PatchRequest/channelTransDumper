@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
 from fakes import EMBEDDER, OPTIONS, FakeClient, video as _video
 
 from channeltrans import ingest, search
-from channeltrans.db import DatabaseError, connect, connect_read_only
+from channeltrans.db import DatabaseError, connect, connect_read_only, writer_lock
 from channeltrans.transcript import Cue, build_passages, parse_json3
 from channeltrans.youtube import FetchError, VideoNotReady, select_track
 
@@ -116,14 +117,38 @@ def test_sync_stores_transcripts_and_is_resumable(conn):
         "new": "done", "mute": "no_transcript", "broken": "failed", "live": "pending",
     }
 
-    # Second run: finished videos are skipped, failed and open ones are tried again.
+    # Second run: finished videos are skipped; failed, open and transcript-less ones are
+    # tried again.
     client.fetched.clear()
     client.videos["broken"] = _video("broken", "Recovered transcript.")
     ingest.discover(conn, client, "https://youtube.test/@falconer")
     ingest.process_queue(conn, client, EMBEDDER, channel_id, OPTIONS)
-    assert client.fetched == ["broken", "live"]
+    assert client.fetched == ["mute", "broken", "live"]
     row = conn.execute("SELECT status, last_error FROM videos WHERE id = 'broken'").fetchone()
     assert tuple(row) == ("done", None)
+
+
+def test_missing_transcripts_are_checked_in_later_runs_until_confirmed(conn):
+    members = dataclasses.replace(_video("members"), availability="subscriber_only")
+    client = FakeClient({"late": _video("late"), "mute": _video("mute"), "members": members})
+    channel_id = ingest.discover(conn, client, "u")
+    options = dataclasses.replace(OPTIONS, missing_checks=2)
+
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, options)
+    client.videos["late"] = _video("late", "Captions that YouTube withheld the first time.")
+    client.fetched.clear()
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, options)
+    assert client.fetched == ["late", "mute"]  # members-only videos are not checked again
+    client.fetched.clear()
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, options)
+    assert client.fetched == []  # "mute" was checked twice: final
+    rows = {r["id"]: (r["status"], r["missing_checks"]) for r in conn.execute("SELECT * FROM videos")}
+    assert rows == {"late": ("done", 0), "mute": ("no_transcript", 2), "members": ("no_transcript", 1)}
+
+    # --recheck-missing checks everything without transcript again, members-only included
+    assert ingest.requeue_missing(conn, channel_id) == 2
+    ingest.process_queue(conn, client, EMBEDDER, channel_id, options)
+    assert sorted(client.fetched) == ["members", "mute"]
 
 
 def test_sync_aborts_after_consecutive_failures_and_gives_up_after_max_attempts(conn):
@@ -326,3 +351,26 @@ def test_read_only_connection_requires_existing_database(tmp_path):
     with pytest.raises(Exception):
         read_only.execute("DELETE FROM channels")
     read_only.close()
+
+
+def test_writer_lock_rejects_a_second_writer(tmp_path):
+    import subprocess
+    import sys
+
+    db = tmp_path / "db.sqlite"
+    holder = subprocess.Popen(
+        [sys.executable, "-c",
+         "import sys, time; from pathlib import Path; from channeltrans.db import writer_lock\n"
+         f"with writer_lock(Path({str(db)!r})):\n    print('locked', flush=True); time.sleep(30)"],
+        stdout=subprocess.PIPE, text=True,
+    )
+    try:
+        assert holder.stdout.readline().strip() == "locked"
+        with pytest.raises(DatabaseError, match="Another sync"):
+            with writer_lock(db):
+                pass
+    finally:
+        holder.kill()
+        holder.wait()
+    with writer_lock(db):  # released when the holder died
+        pass

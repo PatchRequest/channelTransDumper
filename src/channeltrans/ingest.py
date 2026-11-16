@@ -21,6 +21,9 @@ class SyncOptions:
     limit: int | None = None  # fetch at most this many videos in this run
     delay_s: float = 3.0  # pause between two videos
     max_attempts: int = 5  # a failed video is not retried beyond this
+    # A video without transcript is checked in this many runs before it counts as final:
+    # YouTube occasionally answers without captions for a video that has them.
+    missing_checks: int = 3
     # Several failures in a row suggest we are being blocked; the run then stops.
     max_consecutive_failures: int = 3
 
@@ -67,11 +70,17 @@ def discover(conn: sqlite3.Connection, client: YouTubeClient, channel_url: str) 
     return listing.channel_id
 
 
+# Availability values for which YouTube withholds captions from anonymous requests.
+RESTRICTED = ("subscriber_only", "premium_only", "needs_auth")
+
+
 def requeue_missing(conn: sqlite3.Connection, channel_id: str) -> int:
-    """Put videos without a transcript back into the queue (captions often appear late)."""
+    """Check all videos without a transcript again, including final and members-only ones
+    (captions are sometimes added long after upload)."""
     with conn:
         cursor = conn.execute(
-            "UPDATE videos SET status = 'pending' WHERE channel_id = ? AND status = 'no_transcript'",
+            """UPDATE videos SET status = 'pending', missing_checks = 0
+               WHERE channel_id = ? AND status = 'no_transcript'""",
             (channel_id,),
         )
     return cursor.rowcount
@@ -88,12 +97,21 @@ def process_queue(
     # Catch up on what an interrupted run or an older database still owes.
     index_missing(conn, embedder)
     queue = conn.execute(
-        """SELECT id, title FROM videos
+        f"""SELECT id, title FROM videos
            WHERE channel_id = ?
-             AND (status = 'pending' OR (status = 'failed' AND attempts < ?))
+             AND (status = 'pending'
+                  OR (status = 'failed' AND attempts < ?)
+                  OR (status = 'no_transcript' AND missing_checks < ?
+                      AND coalesce(availability, '') NOT IN ({",".join("?" * len(RESTRICTED))})))
            ORDER BY listing_rank
            LIMIT ?""",
-        (channel_id, options.max_attempts, -1 if options.limit is None else options.limit),
+        (
+            channel_id,
+            options.max_attempts,
+            options.missing_checks,
+            *RESTRICTED,
+            -1 if options.limit is None else options.limit,
+        ),
     ).fetchall()
 
     result = SyncResult()
@@ -179,15 +197,18 @@ def _store(conn: sqlite3.Connection, video: FetchedVideo) -> int:
     with conn:
         conn.execute(
             """UPDATE videos SET title = ?, upload_date = ?, duration_s = ?, description = ?,
-                   status = ?, last_error = NULL, processed_at = ?
+                   availability = ?, status = ?, last_error = NULL, processed_at = ?,
+                   missing_checks = CASE WHEN ? THEN 0 ELSE missing_checks + 1 END
                WHERE id = ?""",
             (
                 video.title,
                 video.upload_date,
                 video.duration_s,
                 video.description,
+                video.availability,
                 "done" if has_text else "no_transcript",
                 _now(),
+                has_text,
                 video.id,
             ),
         )

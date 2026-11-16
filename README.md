@@ -32,10 +32,13 @@ uv run channeltrans sync https://www.youtube.com/@somechannel
 - `--limit N` caps a run, `--delay S` sets the pause between videos (default 3 s).
 - Failed videos are retried in later runs, up to five times. After three failures in a
   row the run stops (exit code 1), because that suggests YouTube is blocking requests.
-- `--recheck-missing` checks videos without a transcript again; automatic captions
-  often appear some time after a video is published.
-- Run only one `sync` at a time against the same database; capture several channels
-  one after the other.
+- A video without transcript is checked again in the next two runs: YouTube now and
+  then answers without captions for a video that has them (in one full re-check, 41 of
+  283 such videos turned out to have a transcript). Members-only videos are not
+  checked again. `--recheck-missing` checks every video without a transcript once
+  more, e.g. long after publication, when automatic captions may have been added.
+- Only one `sync` or `reindex` runs at a time per database; a second one stops with an
+  error. Capture several channels one after the other.
 - Only the subtitle track in the video's original language is stored (manually
   maintained subtitles win over automatic captions), never a translation.
 
